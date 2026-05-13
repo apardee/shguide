@@ -23,8 +23,8 @@ struct ShguideCommand: AsyncParsableCommand {
     @Flag(name: .customLong("include-destructive"), help: "Allow commands that delete data or modify system state. Shown in red.")
     var includeDestructive: Bool = false
 
-    @Flag(name: .customLong("no-tools"), help: "Disable verification tool calls (faster, lower quality — for eval).")
-    var noTools: Bool = false
+    @Flag(name: .customLong("tools"), help: "Enable manPage/checkCommand tool calls. Off by default — current eval shows no quality benefit and a 30-60× slowdown.")
+    var tools: Bool = false
 
     @Flag(name: .customLong("json"), help: "Emit JSON instead of an interactive menu.")
     var json: Bool = false
@@ -58,7 +58,7 @@ struct ShguideCommand: AsyncParsableCommand {
         let (context, allHistory) = ContextResolver.resolve(
             includeDestructive: includeDestructive,
             useHistory: history,
-            useTools: !noTools,
+            useTools: tools,
             goalKeywords: keywords
         )
 
@@ -92,7 +92,7 @@ struct ShguideCommand: AsyncParsableCommand {
         if useMock {
             return try await MockEngine().forward(goal: goal, context: context)
         }
-        let engine = FoundationModelsEngine(useTools: !noTools, history: history)
+        let engine = FoundationModelsEngine(useTools: tools, history: history)
         return try await engine.forward(goal: goal, context: context)
     }
 
@@ -105,7 +105,7 @@ struct ShguideCommand: AsyncParsableCommand {
         if useMock {
             return try await MockEngine().describe(command: command, context: context)
         }
-        let engine = FoundationModelsEngine(useTools: !noTools, history: history)
+        let engine = FoundationModelsEngine(useTools: tools, history: history)
         return try await engine.describe(command: command, context: context)
     }
 
