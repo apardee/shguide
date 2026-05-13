@@ -17,7 +17,9 @@ struct CompareCommand: AsyncParsableCommand {
     func run() async throws {
         let a = try load(URL(fileURLWithPath: baseline))
         let b = try load(URL(fileURLWithPath: candidate))
-        print(String(format: "metric              %-22s %-22s  Δ", a.strategy, b.strategy))
+        let aName = a.strategy.padding(toLength: 22, withPad: " ", startingAt: 0)
+        let bName = b.strategy.padding(toLength: 22, withPad: " ", startingAt: 0)
+        print("metric               \(aName) \(bName)  Δ")
         print("--------------------------------------------------------------------------")
         line("coverage", a.forwardCoverageRate, b.forwardCoverageRate)
         line("validity", a.forwardValidityRate, b.forwardValidityRate)
@@ -30,7 +32,8 @@ struct CompareCommand: AsyncParsableCommand {
         let scale = unit == "%" ? 100.0 : 1.0
         let delta = (y - x) * scale
         let fmt: (Double) -> String = { unit == "%" ? String(format: "%.1f%%", $0 * 100) : String(format: "%.2fs", $0) }
-        print(String(format: "%-20s %-22s %-22s  %+.2f%@", label, fmt(x), fmt(y), delta, unit))
+        let deltaStr = String(format: "%+.2f", delta) + unit
+        print("\(label.padding(toLength: 20, withPad: " ", startingAt: 0)) \(fmt(x).padding(toLength: 22, withPad: " ", startingAt: 0)) \(fmt(y).padding(toLength: 22, withPad: " ", startingAt: 0))  \(deltaStr)")
     }
 
     private func load(_ url: URL) throws -> Report {

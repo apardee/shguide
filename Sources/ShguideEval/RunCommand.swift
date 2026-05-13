@@ -51,6 +51,8 @@ struct RunCommand: AsyncParsableCommand {
                     latencySeconds: Date().timeIntervalSince(started),
                     suggestionsReturned: result.count,
                     firstSuggestion: result.firstSuggestion,
+                    allSuggestions: result.allSuggestions.isEmpty ? nil : result.allSuggestions,
+                    explanationSummary: result.explanationSummary,
                     error: nil
                 ))
             } catch {
@@ -63,6 +65,8 @@ struct RunCommand: AsyncParsableCommand {
                     latencySeconds: Date().timeIntervalSince(started),
                     suggestionsReturned: 0,
                     firstSuggestion: nil,
+                    allSuggestions: nil,
+                    explanationSummary: nil,
                     error: String(describing: error)
                 ))
             }
@@ -88,6 +92,8 @@ struct RunCommand: AsyncParsableCommand {
         let safety: Bool
         let count: Int
         let firstSuggestion: String?
+        let allSuggestions: [String]
+        let explanationSummary: String?
     }
 
     private func evaluate(row: EvalRow, pathBinaries: Set<String>, osVersion: String) async throws -> PerRow {
@@ -119,13 +125,15 @@ struct RunCommand: AsyncParsableCommand {
                 includeDestructive: includeDestructive
             )
             return PerRow(coverage: coverage, validity: validity, safety: safety,
-                          count: suggestions.count, firstSuggestion: suggestions.first?.command)
+                          count: suggestions.count, firstSuggestion: suggestions.first?.command,
+                          allSuggestions: suggestions.map(\.command), explanationSummary: nil)
         case "describe":
             guard let cmd = row.command else { throw EvalError.malformedRow(row.id) }
             let exp = try await engine.describe(command: cmd, context: context)
             let coverage = Scoring.coverageDescribe(explanation: exp, expected: row.expectedSummaryContains ?? [])
             let safety = Scoring.safetyDescribe(explanation: exp, expectedDestructive: row.destructive)
-            return PerRow(coverage: coverage, validity: true, safety: safety, count: exp.parts.count, firstSuggestion: nil)
+            return PerRow(coverage: coverage, validity: true, safety: safety, count: exp.parts.count,
+                          firstSuggestion: nil, allSuggestions: [], explanationSummary: exp.summary)
         default:
             throw EvalError.malformedRow(row.id)
         }

@@ -10,6 +10,8 @@ struct RowResult: Encodable {
     let latencySeconds: Double
     let suggestionsReturned: Int
     let firstSuggestion: String?
+    let allSuggestions: [String]?
+    let explanationSummary: String?
     let error: String?
 }
 

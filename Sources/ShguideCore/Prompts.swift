@@ -15,10 +15,18 @@ public enum Prompts {
             : "Do NOT suggest commands that delete data, format disks, kill processes, change ownership recursively, or overwrite system files. Examples to avoid: rm, dd, mkfs, diskutil, shutdown, kill -9, chmod -R 777, chown -R.")
         - Set `risk` honestly: `safe` for read-only, `caution` for writing user files, `destructive` for anything hard to reverse.
 
+        Composition:
+        - When a goal involves counting or aggregation, pipe — "count occurrences" is almost always `sort | uniq -c`; "count files/lines" ends in `| wc -l`.
+        - Use the canonical idiom for the verb, not a homemade equivalent (e.g. for "extract a tar.gz", use `tar -xzf foo.tar.gz`; for "copy to clipboard", use `pbcopy`; for "what's on port N", use `lsof -iTCP:N -sTCP:LISTEN`).
+        - Match the right tool to the noun: free space → `df`, file/dir size → `du`. These are not interchangeable.
+
+        Realism:
+        - Do not invent flags. If you're not sure a flag exists, omit it — a simpler correct command beats a flag-rich wrong one.
+        - Placeholders should look like `<file>`, `<port>`, `user@host:/path` — not `/path/to/largefiles` or `<sort-by-size>`.
+
         Output:
-        - Each `command` field must be a single line. No explanatory prose inside the command. No surrounding backticks, quotes, or shell prompts. No "$ ".
-        - Each `explanation` is one sentence describing what the command does end-to-end.
-        - Provide at least one suggestion. Prefer 2-3 if there are reasonable alternatives.
+        - Each `command` field is a single line. No prose, backticks, "$ ", or ellipses inside the command.
+        - Each `explanation` is one sentence describing the end-to-end effect.
         """
     }
 

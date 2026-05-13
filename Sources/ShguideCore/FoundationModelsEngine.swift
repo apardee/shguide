@@ -7,7 +7,7 @@ public struct FoundationModelsEngine: QueryEngine {
     public let history: [String]
     public let temperature: Double
 
-    public init(useTools: Bool = true, history: [String] = [], temperature: Double = 0.4) {
+    public init(useTools: Bool = true, history: [String] = [], temperature: Double = 0.2) {
         self.useTools = useTools
         self.history = history
         self.temperature = temperature
