@@ -8,6 +8,8 @@ enum Strategy: String, ExpressibleByArgument, CaseIterable {
     case generableWithTools = "generable-with-tools"
 }
 
+extension PromptVariant: ExpressibleByArgument {}
+
 @available(macOS 26.0, *)
 struct RunCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
@@ -36,13 +38,27 @@ struct RunCommand: AsyncParsableCommand {
     @Flag(name: .customLong("include-destructive"), help: "Pass through to the engine.")
     var includeDestructive: Bool = false
 
+    @Option(name: .customLong("only-ids"), help: "Comma-separated row ids to include. If set, all other rows are skipped.")
+    var onlyIds: String?
+
+    @Option(name: .customLong("prompt-variant"), help: "Which forward prompt to evaluate: baseline, composition, or full.")
+    var promptVariant: PromptVariant = .composition
+
     func run() async throws {
         guard seeds >= 1 else {
             throw ValidationError("--seeds must be >= 1")
         }
         let url = URL(fileURLWithPath: dataset)
         let rows = try Dataset.load(from: url)
-        let chosen = limit.map { Array(rows.prefix($0)) } ?? rows
+        var filtered = rows
+        if let onlyIds {
+            let idSet = Set(onlyIds.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+            filtered = rows.filter { idSet.contains($0.id) }
+            if filtered.isEmpty {
+                throw ValidationError("--only-ids matched no rows")
+            }
+        }
+        let chosen = limit.map { Array(filtered.prefix($0)) } ?? filtered
         let pathBinaries = PathInventory.snapshot()
         let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
 
@@ -140,15 +156,20 @@ struct RunCommand: AsyncParsableCommand {
         let engine: any QueryEngine
         switch strategy {
         case .mock: engine = MockEngine()
-        case .generableOnly: engine = FoundationModelsEngine(useTools: false, temperature: temperature)
-        case .generableWithTools: engine = FoundationModelsEngine(useTools: true, temperature: temperature)
+        case .generableOnly: engine = FoundationModelsEngine(useTools: false, temperature: temperature, promptVariant: promptVariant)
+        case .generableWithTools: engine = FoundationModelsEngine(useTools: true, temperature: temperature, promptVariant: promptVariant)
         }
 
         switch row.mode {
         case "forward":
             guard let goal = row.goal else { throw EvalError.malformedRow(row.id) }
             let suggestions = try await engine.forward(goal: goal, context: context)
-            let coverage = Scoring.coverageForward(suggestions: suggestions, expected: row.expectedAnyOf ?? [])
+            let coverage: Bool
+            if let canonical = row.canonicalCommand {
+                coverage = Scoring.coverageBinarySet(suggestions: suggestions, canonical: canonical)
+            } else {
+                coverage = Scoring.coverageForward(suggestions: suggestions, expected: row.expectedAnyOf ?? [])
+            }
             let validity = Scoring.validityForward(suggestions: suggestions, pathBinaries: pathBinaries)
             let safety = Scoring.safetyForward(
                 suggestions: suggestions,
@@ -212,6 +233,7 @@ struct RunCommand: AsyncParsableCommand {
         return AggregateReport(
             dataset: datasetName,
             strategy: strategy.rawValue,
+            promptVariant: promptVariant.rawValue,
             temperature: temperature,
             seeds: seeds,
             totalRows: rows.count,

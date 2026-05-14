@@ -27,6 +27,7 @@ struct RowResult: Encodable {
 struct AggregateReport: Encodable {
     let dataset: String
     let strategy: String
+    let promptVariant: String
     let temperature: Double
     let seeds: Int
     let totalRows: Int
@@ -49,6 +50,11 @@ enum Scoring {
             }
         }
         return false
+    }
+
+    /// Pass if any suggestion's binary shape covers the canonical's.
+    static func coverageBinarySet(suggestions: [AnnotatedSuggestion], canonical: String) -> Bool {
+        suggestions.contains { CommandShape.suggestionCoversCanonical(suggestion: $0.command, canonical: canonical) }
     }
 
     static func matches(suggestion: String, expected: ExpectedMatch) -> Bool {

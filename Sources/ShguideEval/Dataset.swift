@@ -17,12 +17,14 @@ struct EvalRow: Decodable {
     let mode: String
     let goal: String?
     let command: String?
+    let canonicalCommand: String?
     let expectedAnyOf: [ExpectedMatch]?
     let expectedSummaryContains: [String]?
     let destructive: Bool
 
     enum CodingKeys: String, CodingKey {
         case id, mode, goal, command, destructive
+        case canonicalCommand = "canonical_command"
         case expectedAnyOf = "expected_any_of"
         case expectedSummaryContains = "expected_summary_contains"
     }
