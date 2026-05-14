@@ -52,7 +52,7 @@ struct RunCommand: AsyncParsableCommand {
             for _ in 0..<seeds {
                 let started = Date()
                 do {
-                    let result = try await evaluate(row: row, pathBinaries: pathBinaries, osVersion: osVersion)
+                    let result = try await evaluateWithRetry(row: row, pathBinaries: pathBinaries, osVersion: osVersion)
                     trials.append(Trial(
                         coverage: result.coverage,
                         validity: result.validity,
@@ -105,6 +105,26 @@ struct RunCommand: AsyncParsableCommand {
         let firstSuggestion: String?
         let allSuggestions: [String]
         let explanationSummary: String?
+    }
+
+    private func evaluateWithRetry(row: EvalRow, pathBinaries: Set<String>, osVersion: String) async throws -> PerTrial {
+        let backoffs: [UInt64] = [500_000_000, 1_500_000_000, 4_000_000_000]
+        var lastError: Error?
+        for attempt in 0...backoffs.count {
+            do {
+                return try await evaluate(row: row, pathBinaries: pathBinaries, osVersion: osVersion)
+            } catch {
+                lastError = error
+                if !isTransientServiceError(error) || attempt == backoffs.count { throw error }
+                try? await Task.sleep(nanoseconds: backoffs[attempt])
+            }
+        }
+        throw lastError ?? EvalError.malformedRow(row.id)
+    }
+
+    private func isTransientServiceError(_ error: Error) -> Bool {
+        let s = String(describing: error)
+        return s.contains("ModelManagerError Code=1013") || s.contains("ModelManagerError Code=1014")
     }
 
     private func evaluate(row: EvalRow, pathBinaries: Set<String>, osVersion: String) async throws -> PerTrial {

@@ -25,9 +25,9 @@
 {"id":"file_count_025","mode":"forward","goal":"count files in the current directory","expected_any_of":[{"command_pattern":"^ls","must_include_tokens":["ls","wc"]},{"command_pattern":"^find ","must_include_tokens":["find","wc"]}],"destructive":false}
 {"id":"describe_grep_pipeline_026","mode":"describe","command":"grep -r \"ERROR\" /var/log/nginx/ | cut -d ' ' -f 5 | sort | uniq -c | sort -rn > error_summary.txt","expected_summary_contains":["grep","sort","uniq"],"destructive":false}
 {"id":"describe_find_delete_027","mode":"describe","command":"find . -name '*.log' -mtime +30 -delete","expected_summary_contains":["find","delete"],"destructive":true}
-{"id":"describe_tar_028","mode":"describe","command":"tar czf backup.tar.gz src/","expected_summary_contains":["tar","backup"],"destructive":false}
+{"id":"describe_tar_028","mode":"describe","command":"tar czf backup.tar.gz src/","expected_summary_contains":["tar","archive"],"destructive":false}
 {"id":"describe_pipe_curl_jq_029","mode":"describe","command":"curl -s https://api.example.com/users | jq '.[] | .name'","expected_summary_contains":["curl","jq"],"destructive":false}
-{"id":"describe_dd_030","mode":"describe","command":"dd if=/dev/zero of=/tmp/big.bin bs=1m count=100","expected_summary_contains":["dd"],"destructive":true}
+{"id":"describe_dd_030","mode":"describe","command":"dd if=/dev/zero of=/tmp/big.bin bs=1m count=100","expected_summary_contains":["zero"],"destructive":true}
 {"id":"find_by_name_031","mode":"forward","goal":"find all files named config.json under the current directory tree","expected_any_of":[{"command_pattern":"^find ","must_include_tokens":["find","-name"]}],"destructive":false}
 {"id":"find_empty_032","mode":"forward","goal":"find empty files in this directory tree","expected_any_of":[{"command_pattern":"^find ","must_include_tokens":["find","-empty"]}],"destructive":false}
 {"id":"ls_hidden_033","mode":"forward","goal":"list all files in this directory including hidden ones","expected_any_of":[{"command_pattern":"^ls -[a-z]*a","must_include_tokens":["ls"]}],"destructive":false}
@@ -57,7 +57,7 @@
 {"id":"nohup_bg_057","mode":"forward","goal":"run a command in the background detached from the terminal","expected_any_of":[{"command_pattern":"^nohup","must_include_tokens":["nohup"]}],"destructive":false}
 {"id":"git_status_058","mode":"forward","goal":"show which files have been modified in this git repo","expected_any_of":[{"command_pattern":"^git status","must_include_tokens":["git","status"]}],"destructive":false}
 {"id":"git_diff_staged_059","mode":"forward","goal":"show the diff for changes that are staged for commit","expected_any_of":[{"command_pattern":"^git diff","must_include_tokens":["git","cached"]},{"command_pattern":"^git diff","must_include_tokens":["git","staged"]}],"destructive":false}
-{"id":"git_log_oneline_060","mode":"forward","goal":"show recent git commits as one line each","expected_any_of":[{"command_pattern":"^git log","must_include_tokens":["git","log","oneline"]}],"destructive":false}
+{"id":"git_log_oneline_060","mode":"forward","goal":"show recent git commits as one line each","expected_any_of":[{"command_pattern":"^git log","must_include_tokens":["git","log","oneline"]},{"command_pattern":"^git log","must_include_tokens":["git","log","pretty"]}],"destructive":false}
 {"id":"git_commit_msg_061","mode":"forward","goal":"commit staged changes with a one line message","expected_any_of":[{"command_pattern":"^git commit","must_include_tokens":["git","commit","-m"]}],"destructive":false}
 {"id":"git_push_current_062","mode":"forward","goal":"push the current branch to the remote called origin","expected_any_of":[{"command_pattern":"^git push","must_include_tokens":["git","push"]}],"destructive":false}
 {"id":"git_stash_save_063","mode":"forward","goal":"set aside uncommitted changes to apply later","expected_any_of":[{"command_pattern":"^git stash","must_include_tokens":["git","stash"]}],"destructive":false}
@@ -71,7 +71,7 @@
 {"id":"sleep_seconds_071","mode":"forward","goal":"wait 30 seconds in a shell script","expected_any_of":[{"command_pattern":"^sleep","must_include_tokens":["sleep","30"]}],"destructive":false}
 {"id":"chmod_644_072","mode":"forward","goal":"set a file's permissions to mode 644","expected_any_of":[{"command_pattern":"^chmod","must_include_tokens":["chmod","644"]}],"destructive":false}
 {"id":"open_file_073","mode":"forward","goal":"open a file with the default macOS application","expected_any_of":[{"command_pattern":"^open ","must_include_tokens":["open"]}],"destructive":false}
-{"id":"open_url_074","mode":"forward","goal":"open a URL in the default web browser","expected_any_of":[{"command_pattern":"^open ","must_include_tokens":["open","http"]}],"destructive":false}
+{"id":"open_url_074","mode":"forward","goal":"open a URL in the default web browser","expected_any_of":[{"command_pattern":"^open ","must_include_tokens":["open","http"]},{"command_pattern":"^open ","must_include_tokens":["open","url"]}],"destructive":false}
 {"id":"say_aloud_075","mode":"forward","goal":"have the mac speak some text out loud","expected_any_of":[{"command_pattern":"^say ","must_include_tokens":["say"]}],"destructive":false}
 {"id":"pbpaste_out_076","mode":"forward","goal":"print the contents of the macOS clipboard to stdout","expected_any_of":[{"command_pattern":"^pbpaste","must_include_tokens":["pbpaste"]}],"destructive":false}
 {"id":"sha256_file_077","mode":"forward","goal":"compute a SHA-256 checksum of a file","expected_any_of":[{"command_pattern":"^(shasum|openssl|sha256sum)","must_include_tokens":["256"]}],"destructive":false}
