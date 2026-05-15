@@ -2,274 +2,260 @@ import ArgumentParser
 import Foundation
 import ShguideCore
 
-enum Strategy: String, ExpressibleByArgument, CaseIterable {
-    case mock
-    case generableOnly = "generable-only"
-    case generableWithTools = "generable-with-tools"
-}
-
 extension PromptVariant: ExpressibleByArgument {}
+
+/// Bounded concurrency semaphore using a Swift actor.
+private actor Semaphore {
+    private var count: Int
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    init(count: Int) { self.count = count }
+
+    func wait() async {
+        if count > 0 {
+            count -= 1
+        } else {
+            await withCheckedContinuation { waiters.append($0) }
+        }
+    }
+
+    func signal() {
+        if let first = waiters.first {
+            waiters.removeFirst()
+            first.resume()
+        } else {
+            count += 1
+        }
+    }
+}
 
 @available(macOS 26.0, *)
 struct RunCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "run",
-        abstract: "Run the eval dataset and emit a JSON report."
+        abstract: "Run eval prompts through a model and emit raw JSONL output."
     )
 
     @Option(name: .customLong("dataset"), help: "Path to the JSONL dataset.")
     var dataset: String
 
-    @Option(name: .customLong("strategy"), help: "Engine strategy to evaluate.")
-    var strategy: Strategy = .generableOnly
+    @Option(name: .customLong("model"), help: "Model backend: foundation-models, foundation-models+tools, mock.")
+    var model: String = "foundation-models"
 
-    @Option(name: .customLong("report"), help: "Path to write the JSON report. If omitted, prints to stdout.")
-    var report: String?
+    @Option(name: .customLong("output"), help: "Path to write raw JSONL output.")
+    var output: String
 
-    @Option(name: .customLong("limit"), help: "Optional cap on number of rows to run.")
-    var limit: Int?
+    @Option(name: .customLong("concurrency"), help: "Max concurrent requests (default 4).")
+    var concurrency: Int = 4
 
-    @Option(name: .customLong("seeds"), help: "Number of independent trials per row (>=1). Higher exposes run-to-run variance.")
+    @Option(name: .customLong("seeds"), help: "Independent trials per row (>= 1).")
     var seeds: Int = 1
 
-    @Option(name: .customLong("temperature"), help: "Sampling temperature for the model. 0.0 is deterministic; 0.2 is the ship default.")
+    @Option(name: .customLong("temperature"), help: "Sampling temperature.")
     var temperature: Double = 0.2
 
     @Flag(name: .customLong("include-destructive"), help: "Pass through to the engine.")
     var includeDestructive: Bool = false
 
-    @Option(name: .customLong("only-ids"), help: "Comma-separated row ids to include. If set, all other rows are skipped.")
+    @Option(name: .customLong("only-ids"), help: "Comma-separated row ids to run exclusively.")
     var onlyIds: String?
 
-    @Option(name: .customLong("prompt-variant"), help: "Which forward prompt to evaluate: baseline, composition, or full.")
+    @Option(name: .customLong("limit"), help: "Optional cap on number of rows to run.")
+    var limit: Int?
+
+    @Option(name: .customLong("prompt-variant"), help: "Prompt variant: baseline, composition, or full.")
     var promptVariant: PromptVariant = .composition
 
     func run() async throws {
-        guard seeds >= 1 else {
-            throw ValidationError("--seeds must be >= 1")
-        }
+        guard seeds >= 1 else { throw ValidationError("--seeds must be >= 1") }
+        guard concurrency >= 1 else { throw ValidationError("--concurrency must be >= 1") }
+
         let url = URL(fileURLWithPath: dataset)
-        let rows = try Dataset.load(from: url)
+        let (rows, benchmarkVersion) = try Dataset.loadWithVersion(from: url)
         var filtered = rows
         if let onlyIds {
             let idSet = Set(onlyIds.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
             filtered = rows.filter { idSet.contains($0.id) }
-            if filtered.isEmpty {
-                throw ValidationError("--only-ids matched no rows")
-            }
+            guard !filtered.isEmpty else { throw ValidationError("--only-ids matched no rows") }
         }
         let chosen = limit.map { Array(filtered.prefix($0)) } ?? filtered
+
         let pathBinaries = PathInventory.snapshot()
         let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
+        let runTimestamp = ISO8601DateFormatter().string(from: Date())
 
-        var results: [RowResult] = []
-        for (idx, row) in chosen.enumerated() {
-            var trials: [Trial] = []
-            for _ in 0..<seeds {
-                let started = Date()
-                do {
-                    let result = try await evaluateWithRetry(row: row, pathBinaries: pathBinaries, osVersion: osVersion)
-                    trials.append(Trial(
-                        coverage: result.coverage,
-                        validity: result.validity,
-                        safety: result.safety,
-                        latencySeconds: Date().timeIntervalSince(started),
-                        suggestionsReturned: result.count,
-                        firstSuggestion: result.firstSuggestion,
-                        allSuggestions: result.allSuggestions.isEmpty ? nil : result.allSuggestions,
-                        explanationSummary: result.explanationSummary,
-                        error: nil
-                    ))
-                } catch {
-                    trials.append(Trial(
-                        coverage: false,
-                        validity: false,
-                        safety: !row.destructive,
-                        latencySeconds: Date().timeIntervalSince(started),
-                        suggestionsReturned: 0,
-                        firstSuggestion: nil,
-                        allSuggestions: nil,
-                        explanationSummary: nil,
-                        error: String(describing: error)
-                    ))
+        stderr("Running \(chosen.count) rows × \(seeds) seeds with model=\(model), concurrency=\(concurrency)")
+
+        let sem = Semaphore(count: concurrency)
+        var indexedResults: [(Int, RawRowResult)] = []
+        let lock = NSLock()
+
+        await withTaskGroup(of: (Int, RawRowResult).self) { group in
+            for (idx, row) in chosen.enumerated() {
+                group.addTask {
+                    await sem.wait()
+                    defer { Task { await sem.signal() } }
+                    let result = await self.runRow(
+                        idx: idx, total: chosen.count,
+                        row: row, pathBinaries: pathBinaries,
+                        osVersion: osVersion, runTimestamp: runTimestamp,
+                        benchmarkVersion: benchmarkVersion
+                    )
+                    return (idx, result)
                 }
             }
-            let rowResult = makeRowResult(id: row.id, mode: row.mode, trials: trials)
-            results.append(rowResult)
-            let glyphs = trials.map { $0.coverage ? "✓" : "✗" }.joined()
-            FileHandle.standardError.write(Data("[\(idx + 1)/\(chosen.count)] \(row.id) \(glyphs)\n".utf8))
-        }
-
-        let aggregate = aggregate(rows: results, datasetName: url.lastPathComponent)
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let data = try encoder.encode(aggregate)
-        if let report {
-            try data.write(to: URL(fileURLWithPath: report))
-            FileHandle.standardError.write(Data("Wrote \(report)\n".utf8))
-        } else {
-            print(String(decoding: data, as: UTF8.self))
-        }
-        printRollup(aggregate)
-    }
-
-    private struct PerTrial {
-        let coverage: Bool
-        let validity: Bool
-        let safety: Bool
-        let count: Int
-        let firstSuggestion: String?
-        let allSuggestions: [String]
-        let explanationSummary: String?
-    }
-
-    private func evaluateWithRetry(row: EvalRow, pathBinaries: Set<String>, osVersion: String) async throws -> PerTrial {
-        let backoffs: [UInt64] = [500_000_000, 1_500_000_000, 4_000_000_000]
-        var lastError: Error?
-        for attempt in 0...backoffs.count {
-            do {
-                return try await evaluate(row: row, pathBinaries: pathBinaries, osVersion: osVersion)
-            } catch {
-                lastError = error
-                if !isTransientServiceError(error) || attempt == backoffs.count { throw error }
-                try? await Task.sleep(nanoseconds: backoffs[attempt])
+            for await pair in group {
+                lock.withLock { indexedResults.append(pair) }
             }
         }
-        throw lastError ?? EvalError.malformedRow(row.id)
+
+        indexedResults.sort { $0.0 < $1.0 }
+        let rawResults = indexedResults.map(\.1)
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = []
+        var lines: [String] = []
+        for r in rawResults {
+            let data = try encoder.encode(r)
+            lines.append(String(decoding: data, as: UTF8.self))
+        }
+        let jsonl = lines.joined(separator: "\n") + "\n"
+        try jsonl.write(toFile: output, atomically: true, encoding: .utf8)
+        stderr("Wrote \(rawResults.count) rows to \(output)")
     }
 
-    private func isTransientServiceError(_ error: Error) -> Bool {
-        let s = String(describing: error)
-        return s.contains("ModelManagerError Code=1013") || s.contains("ModelManagerError Code=1014")
-    }
-
-    private func evaluate(row: EvalRow, pathBinaries: Set<String>, osVersion: String) async throws -> PerTrial {
+    private func runRow(
+        idx: Int, total: Int,
+        row: EvalRow,
+        pathBinaries: Set<String>,
+        osVersion: String,
+        runTimestamp: String,
+        benchmarkVersion: Int
+    ) async -> RawRowResult {
         let context = InvocationContext(
             shellName: "zsh",
             osVersion: osVersion,
             pathBinaries: pathBinaries,
             historyMatches: [],
             includeDestructive: includeDestructive,
-            useTools: strategy == .generableWithTools
+            useTools: model == "foundation-models+tools"
         )
 
-        let engine: any QueryEngine
-        switch strategy {
-        case .mock: engine = MockEngine()
-        case .generableOnly: engine = FoundationModelsEngine(useTools: false, temperature: temperature, promptVariant: promptVariant)
-        case .generableWithTools: engine = FoundationModelsEngine(useTools: true, temperature: temperature, promptVariant: promptVariant)
+        var trials: [RawTrial] = []
+        for seed in 0..<seeds {
+            let started = Date()
+            do {
+                let trial = try await runTrialWithRetry(row: row, context: context, seed: seed)
+                trials.append(trial)
+            } catch {
+                trials.append(RawTrial(
+                    seed: seed,
+                    suggestions: nil,
+                    explanation: nil,
+                    latencyMs: Int(Date().timeIntervalSince(started) * 1000),
+                    timestamp: ISO8601DateFormatter().string(from: started),
+                    error: String(describing: error)
+                ))
+            }
         }
+
+        let glyphs = trials.map { t -> String in
+            guard t.error == nil else { return "E" }
+            let hasSuggestions = !(t.suggestions ?? []).isEmpty
+            let hasExplanation = t.explanation != nil
+            return (hasSuggestions || hasExplanation) ? "✓" : "✗"
+        }.joined()
+        stderr("[\(idx + 1)/\(total)] \(row.id)  \(glyphs)")
+
+        return RawRowResult(
+            id: row.id,
+            mode: row.mode,
+            goal: row.goal,
+            command: row.command,
+            canonicalCommand: row.canonicalCommand,
+            expectedAnyOf: row.expectedAnyOf,
+            expectedSummaryContains: row.expectedSummaryContains,
+            destructive: row.destructive,
+            model: model,
+            promptVariant: promptVariant.rawValue,
+            temperature: temperature,
+            benchmarkVersion: benchmarkVersion,
+            runTimestamp: runTimestamp,
+            trials: trials
+        )
+    }
+
+    private func runTrialWithRetry(row: EvalRow, context: InvocationContext, seed: Int) async throws -> RawTrial {
+        let backoffs: [UInt64] = [500_000_000, 1_500_000_000, 4_000_000_000]
+        var lastError: Error?
+        for attempt in 0...backoffs.count {
+            do {
+                return try await runTrial(row: row, context: context, seed: seed)
+            } catch {
+                lastError = error
+                if !isTransient(error) || attempt == backoffs.count { throw error }
+                try? await Task.sleep(nanoseconds: backoffs[attempt])
+            }
+        }
+        throw lastError!
+    }
+
+    private func isTransient(_ error: Error) -> Bool {
+        let s = String(describing: error)
+        return s.contains("ModelManagerError Code=1013") || s.contains("ModelManagerError Code=1014")
+    }
+
+    private func runTrial(row: EvalRow, context: InvocationContext, seed: Int) async throws -> RawTrial {
+        let started = Date()
+        let ts = ISO8601DateFormatter().string(from: started)
+        let engine = makeEngine()
 
         switch row.mode {
         case "forward":
-            guard let goal = row.goal else { throw EvalError.malformedRow(row.id) }
+            guard let goal = row.goal else { throw RunError.malformedRow(row.id) }
             let suggestions = try await engine.forward(goal: goal, context: context)
-            let coverage: Bool
-            if let canonical = row.canonicalCommand {
-                coverage = Scoring.coverageBinarySet(suggestions: suggestions, canonical: canonical)
-            } else {
-                coverage = Scoring.coverageForward(suggestions: suggestions, expected: row.expectedAnyOf ?? [])
+            let raw = suggestions.map { s in
+                RawSuggestion(command: s.command, explanation: s.explanation,
+                              risk: s.risk.rawValue, fromHistory: s.fromHistory)
             }
-            let validity = Scoring.validityForward(suggestions: suggestions, pathBinaries: pathBinaries)
-            let safety = Scoring.safetyForward(
-                suggestions: suggestions,
-                expectedDestructive: row.destructive,
-                includeDestructive: includeDestructive
-            )
-            return PerTrial(coverage: coverage, validity: validity, safety: safety,
-                            count: suggestions.count, firstSuggestion: suggestions.first?.command,
-                            allSuggestions: suggestions.map(\.command), explanationSummary: nil)
+            return RawTrial(seed: seed, suggestions: raw, explanation: nil,
+                            latencyMs: Int(Date().timeIntervalSince(started) * 1000),
+                            timestamp: ts, error: nil)
         case "describe":
-            guard let cmd = row.command else { throw EvalError.malformedRow(row.id) }
+            guard let cmd = row.command else { throw RunError.malformedRow(row.id) }
             let exp = try await engine.describe(command: cmd, context: context)
-            let coverage = Scoring.coverageDescribe(explanation: exp, expected: row.expectedSummaryContains ?? [])
-            let safety = Scoring.safetyDescribe(explanation: exp, expectedDestructive: row.destructive)
-            return PerTrial(coverage: coverage, validity: true, safety: safety, count: exp.parts.count,
-                            firstSuggestion: nil, allSuggestions: [], explanationSummary: exp.summary)
+            let rawExp = RawExplanation(
+                summary: exp.summary,
+                parts: exp.parts.map { RawExplanationPart(token: $0.token, explanation: $0.explanation) },
+                containsDestructive: exp.containsDestructive
+            )
+            return RawTrial(seed: seed, suggestions: nil, explanation: rawExp,
+                            latencyMs: Int(Date().timeIntervalSince(started) * 1000),
+                            timestamp: ts, error: nil)
         default:
-            throw EvalError.malformedRow(row.id)
+            throw RunError.malformedRow(row.id)
         }
     }
 
-    private func makeRowResult(id: String, mode: String, trials: [Trial]) -> RowResult {
-        let n = Double(trials.count)
-        let coverageRate = n == 0 ? 0 : Double(trials.filter(\.coverage).count) / n
-        let validityRate = n == 0 ? 0 : Double(trials.filter(\.validity).count) / n
-        let safetyRate = n == 0 ? 0 : Double(trials.filter(\.safety).count) / n
-        let firstCoverage = trials.first?.coverage
-        let stable = trials.allSatisfy { $0.coverage == firstCoverage }
-        let latencies = trials.map(\.latencySeconds).sorted()
-        let median = latencies.isEmpty ? 0 : latencies[latencies.count / 2]
-        return RowResult(
-            id: id,
-            mode: mode,
-            trials: trials,
-            coverageRate: coverageRate,
-            validityRate: validityRate,
-            safetyRate: safetyRate,
-            stable: stable,
-            medianLatencySeconds: median
-        )
+    private func makeEngine() -> any QueryEngine {
+        switch model {
+        case "mock":
+            return MockEngine()
+        case "foundation-models+tools":
+            return FoundationModelsEngine(useTools: true, temperature: temperature, promptVariant: promptVariant)
+        default: // "foundation-models"
+            return FoundationModelsEngine(useTools: false, temperature: temperature, promptVariant: promptVariant)
+        }
     }
 
-    private func aggregate(rows: [RowResult], datasetName: String) -> AggregateReport {
-        let forwardRows = rows.filter { $0.mode == "forward" }
-        let forwardTrials = forwardRows.flatMap(\.trials)
-        let allTrials = rows.flatMap(\.trials)
-        let latencies = allTrials.map(\.latencySeconds).sorted()
-        let median = latencies.isEmpty ? 0 : latencies[latencies.count / 2]
-        let p95Idx = latencies.isEmpty ? 0 : Int(Double(latencies.count - 1) * 0.95)
-        let p95 = latencies.isEmpty ? 0 : latencies[p95Idx]
-        let forwardCoverageRate = forwardTrials.isEmpty
-            ? 0 : Double(forwardTrials.filter(\.coverage).count) / Double(forwardTrials.count)
-        let forwardCoverageStrictRate = forwardRows.isEmpty
-            ? 0 : Double(forwardRows.filter { $0.coverageRate >= 1.0 }.count) / Double(forwardRows.count)
-        let forwardValidityRate = forwardTrials.isEmpty
-            ? 0 : Double(forwardTrials.filter(\.validity).count) / Double(forwardTrials.count)
-        let safetyRate = allTrials.isEmpty
-            ? 0 : Double(allTrials.filter(\.safety).count) / Double(allTrials.count)
-        let stabilityRate = rows.isEmpty
-            ? 0 : Double(rows.filter(\.stable).count) / Double(rows.count)
-        return AggregateReport(
-            dataset: datasetName,
-            strategy: strategy.rawValue,
-            promptVariant: promptVariant.rawValue,
-            temperature: temperature,
-            seeds: seeds,
-            totalRows: rows.count,
-            forwardCoverageRate: forwardCoverageRate,
-            forwardCoverageStrictRate: forwardCoverageStrictRate,
-            forwardValidityRate: forwardValidityRate,
-            safetyRate: safetyRate,
-            stabilityRate: stabilityRate,
-            medianLatencySeconds: median,
-            p95LatencySeconds: p95,
-            rows: rows
-        )
+    private func stderr(_ msg: String) {
+        FileHandle.standardError.write(Data((msg + "\n").utf8))
     }
 
-    private func printRollup(_ r: AggregateReport) {
-        let pct = { (v: Double) in String(format: "%.1f%%", v * 100) }
-        FileHandle.standardError.write(Data("""
-
-        === \(r.strategy) on \(r.dataset) (\(r.totalRows) rows × \(r.seeds) seeds, T=\(String(format: "%.2f", r.temperature))) ===
-          coverage:        \(pct(r.forwardCoverageRate))  (mean over trials)
-          coverage strict: \(pct(r.forwardCoverageStrictRate))  (all trials pass)
-          validity:        \(pct(r.forwardValidityRate))
-          safety:          \(pct(r.safetyRate))
-          stability:       \(pct(r.stabilityRate))  (rows where all trials agreed)
-          median latency:  \(String(format: "%.2fs", r.medianLatencySeconds))
-          p95 latency:     \(String(format: "%.2fs", r.p95LatencySeconds))
-
-        """.utf8))
-    }
-
-    enum EvalError: Error, CustomStringConvertible {
+    enum RunError: Error, CustomStringConvertible {
         case malformedRow(String)
         var description: String {
-            switch self {
-            case .malformedRow(let id): return "malformed row: \(id)"
-            }
+            switch self { case .malformedRow(let id): return "malformed row: \(id)" }
         }
     }
 }

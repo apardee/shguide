@@ -35,20 +35,10 @@ enum CommandShape {
     private static func splitStages(_ command: String) -> [String] {
         // Naive split — no quote awareness. Good enough for the corpus we sample:
         // we filter out rows that embed scripts, so | / && / || / ; are operators.
-        let pattern = #"\s*(?:\|\||&&|;|\|)\s*"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [command] }
-        let ns = command as NSString
-        let fullRange = NSRange(location: 0, length: ns.length)
-        var stages: [String] = []
-        var cursor = 0
-        regex.enumerateMatches(in: command, range: fullRange) { match, _, _ in
-            guard let m = match else { return }
-            let stage = ns.substring(with: NSRange(location: cursor, length: m.range.location - cursor))
-            stages.append(stage)
-            cursor = m.range.location + m.range.length
-        }
-        stages.append(ns.substring(from: cursor))
-        return stages.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        command
+            .split(separator: #/\s*(?:\|\||&&|;|\|)\s*/#)
+            .map(String.init)
+            .filter { !$0.isEmpty }
     }
 
     private static func firstBinary(stage: String) -> String? {

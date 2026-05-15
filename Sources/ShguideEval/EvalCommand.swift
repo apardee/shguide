@@ -6,6 +6,6 @@ struct EvalCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "shguide-eval",
         abstract: "Evaluation harness for the shguide query engine.",
-        subcommands: [RunCommand.self, CompareCommand.self, SampleNL2BashCommand.self]
+        subcommands: [RunCommand.self, ScoreCommand.self, CompareCommand.self, SampleNL2BashCommand.self]
     )
 }
