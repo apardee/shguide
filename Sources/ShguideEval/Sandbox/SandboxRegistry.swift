@@ -7,16 +7,42 @@ import Foundation
 enum SandboxRegistry {
 
     static let all: [any SandboxTestCase] = [
+        // File discovery
         FindLargeFilesTest(),
         FindByNameTest(),
         FindEmptyTest(),
+        FindRecentTest(),
+        FindExtCountTest(),
+
+        // Text search
         GrepRecursiveTest(),
         GrepIgnoreCaseTest(),
+
+        // Text processing
         WordCountTest(),
         SortUniqCountTest(),
         AwkColumnTest(),
-        TarListTest(),
+        HeadTailTest(),
+        TrUppercaseTest(),
+        SedReplaceTest(),
         DiffFilesTest(),
+
+        // File system operations
+        TouchFileTest(),
+        MkdirNestedTest(),
+        CpRecursiveTest(),
+        ChmodTest(),
+        LsTest(),
+
+        // Archives
+        TarListTest(),
+        TarCreateExtractTest(),
+
+        // Checksums / encoding
+        Sha256Test(),
+        Base64Test(),
+
+        // Network (string-verified)
         PingCountTest(),
     ]
 
