@@ -1,150 +1,150 @@
-{"canonical_command":"apropos postscript | grep -i png","destructive":false,"goal":"Searches manual pages which descriptions contain 'postscript', and prints name and description of only ones that contain any-cased 'png' pattern.","id":"nl2bash_apropos_001","mode":"forward"}
-{"canonical_command":"bash | tee \/var\/log\/bash.out.log","destructive":false,"goal":"Copy the standard output of a \"bash\" session to \"\/var\/log\/bash.out.log\"","id":"nl2bash_bash_001","mode":"forward"}
-{"canonical_command":"bind -p | grep $'\"\\x61\"'","destructive":false,"goal":"check readline bindings for \"\\x61\"","id":"nl2bash_bind_001","mode":"forward"}
-{"canonical_command":"bind -p|grep -i '\"[pE]\"'","destructive":false,"goal":"print bindings for \"p\" and \"e\" with no case sensitivity","id":"nl2bash_bind_002","mode":"forward"}
-{"canonical_command":"brew link bash-completion","destructive":false,"goal":"Symlinks all of formula’s installed files into the Homebrew prefix.","id":"nl2bash_brew_001","mode":"forward"}
-{"canonical_command":"cal -3 12 2120","destructive":false,"goal":"Displays calendar of a previous, current and next month for December of 2120 year.","id":"nl2bash_cal_001","mode":"forward"}
-{"canonical_command":"cal 02 1956","destructive":false,"goal":"Print the calendar for February 1956","id":"nl2bash_cal_002","mode":"forward"}
-{"canonical_command":"cat results2.txt | xargs -I{} ln -s {} ~\/newlinks","destructive":false,"goal":"Create a symbolic link in directory \"~\/newlinks\" for each file listed in \"results2.txt\"","id":"nl2bash_cat_001","mode":"forward"}
-{"canonical_command":"cat $(find . -name '*.foo')","destructive":false,"goal":"Find all *.foo files under current directory and print their contents","id":"nl2bash_cat_002","mode":"forward"}
-{"canonical_command":"cat files.txt | xargs du -c | tail -1","destructive":false,"goal":"Print the grand total disk usage of all files listed in \"files.txt\"","id":"nl2bash_cat_003","mode":"forward"}
-{"canonical_command":"cat ${TMP}\/${SCRIPT_NAME}.pid|sort -rh;","destructive":false,"goal":"Reversibly sorts content of the '${TMP}\/${SCRIPT_NAME}.pid' file, comparing human readable numbers in file strings.","id":"nl2bash_cat_004","mode":"forward"}
-{"canonical_command":"cd \/nfs\/office\/ &&  find . -name 'file.txt' | sed -r 's|(\\.\/([^\/]*\/)?).*|\\1|'","destructive":false,"goal":"search for the text file \"file.txt\" and display its parent directory","id":"nl2bash_cd_001","mode":"forward"}
-{"canonical_command":"chgrp -R GROUP \/path\/to\/repo","destructive":false,"goal":"Recursively changes group ownership of everything within a '\/path\/to\/repo' to 'GROUP'.","id":"nl2bash_chgrp_001","mode":"forward"}
-{"canonical_command":"sudo chmod +rx $(which node)","destructive":false,"goal":"Add read and execute permission to command \"node\"","id":"nl2bash_chmod_001","mode":"forward"}
-{"canonical_command":"column list-of-entries.txt","destructive":false,"goal":"Treat each line of \"list-of-entries.txt\" as a value to be put in one cell of the table that \"column\" outputs","id":"nl2bash_column_001","mode":"forward"}
-{"canonical_command":"comm -23 <(sort subset | uniq) <(sort set | uniq) | head -1","destructive":false,"goal":"Check if the contents of file \"subset\" is a subset of file \"set\"","id":"nl2bash_comm_001","mode":"forward"}
-{"canonical_command":"sudo cp -a libgtest_main.so libgtest.so \/usr\/lib\/","destructive":false,"goal":"Copies 'libgtest_main.so' and 'libgtest.so' to '\/usr\/lib\/', preserving all attributes, and copying symlinks as symlinks, without following in source files.","id":"nl2bash_cp_001","mode":"forward"}
-{"canonical_command":"curl -s http:\/\/page.that.serves.json.com\/json\/ | json_xs","destructive":false,"goal":"download content from \"http:\/\/page.that.serves.json.com\/json\/\" and format it as json","id":"nl2bash_curl_001","mode":"forward"}
-{"canonical_command":"curl --data-urlencode \"paramName=param\" www.example.com","destructive":false,"goal":"download contents from website \"www.example.com\" using URL-encoding \"paramName=param\"","id":"nl2bash_curl_002","mode":"forward"}
-{"canonical_command":"curl http:\/\/example.com\/","destructive":false,"goal":"download contents of a website \"http:\/\/example.com\/\"","id":"nl2bash_curl_003","mode":"forward"}
-{"canonical_command":"date +\"%T\"","destructive":false,"goal":"Print timestamp as HH:MM:SS","id":"nl2bash_date_001","mode":"forward"}
-{"canonical_command":"date -j -f \"%a %b %d %H:%M:%S %Y %z\" \"Sat Aug 09 13:37:14 2014 +1100\"","destructive":false,"goal":"Reformat date \"Sat Aug 09 13:37:14 2014 +1100\" according to format string \"%a %b %d %H:%M:%S %Y %z\"","id":"nl2bash_date_002","mode":"forward"}
-{"canonical_command":"date -d tomorrow+2days-10minutes","destructive":false,"goal":"Show the date in default format for tomorrow + 2 days + 10 minutes","id":"nl2bash_date_003","mode":"forward"}
-{"canonical_command":"df | grep \/dev\/disk0s2","destructive":false,"goal":"Print the file system disk space usage for \"\/dev\/disk0s2\" if exists","id":"nl2bash_df_001","mode":"forward"}
-{"canonical_command":"df | tail -n +2 | tr -s ' ' | cut -d ' ' -f 2 | paste -s -d+ | bc","destructive":false,"goal":"Print total size of file systems in kilobytes.","id":"nl2bash_df_002","mode":"forward"}
-{"canonical_command":"diff -ENwbur repos1\/ repos2\/","destructive":false,"goal":"Compare each file in \"repos1\/\" and \"repos2\/\", treat absent files as empty, ignore differences in whitespace and tab expansions, and print 3 lines of unified context","id":"nl2bash_diff_001","mode":"forward"}
-{"canonical_command":"diff --new-line-format=\"\" --unchanged-line-format=\"\"  file1 file2","destructive":false,"goal":"Output all lines from file1 except those present in file2, assuming both files are sorted.","id":"nl2bash_diff_002","mode":"forward"}
-{"canonical_command":"diff -q <(sort set1) <(sort set2)","destructive":false,"goal":"Print whether the sorted contents of \"set1\" and \"set2\" differ","id":"nl2bash_diff_003","mode":"forward"}
-{"canonical_command":"du -a --max-depth=1 | sort -n","destructive":false,"goal":"Display the sizes and filepaths of all files\/directories sorted in ascending order of size","id":"nl2bash_du_001","mode":"forward"}
-{"canonical_command":"du -sh *\/ | sort -n","destructive":false,"goal":"List each directory in the current directory prefixed with its disk usage in human readable format and sorted from smallest to largest","id":"nl2bash_du_002","mode":"forward"}
-{"canonical_command":"egrep -R \"word-1|word-2” directory-path","destructive":false,"goal":"Recursively finds strings with 'word-1' or 'word-2' in any file under 'directory-path', following symlinks, and prints found strings.","id":"nl2bash_egrep_001","mode":"forward"}
-{"canonical_command":"env | grep -i shell","destructive":false,"goal":"Case-insensitive search all existing environment variables and their values for \"shell\".","id":"nl2bash_env_001","mode":"forward"}
-{"canonical_command":"env | grep '^GOROOT'","destructive":false,"goal":"List all environment variables (name and value) whose name starts with GOROOT","id":"nl2bash_env_002","mode":"forward"}
-{"canonical_command":"env -i","destructive":false,"goal":"List an empty environment (prints nothing)","id":"nl2bash_env_003","mode":"forward"}
-{"canonical_command":"exit -1","destructive":false,"goal":"Exits from process with exit code 255.","id":"nl2bash_exit_001","mode":"forward"}
-{"canonical_command":"file -i filename","destructive":false,"goal":"Display the mimetype of \"filename\"","id":"nl2bash_file_001","mode":"forward"}
-{"canonical_command":"find \/home -type d ! -exec test -e '{}\/bin' \\; -print","destructive":false,"goal":"Find all directories under \/home that doesn't contain a file\/directory named 'bin'","id":"nl2bash_find_001","mode":"forward"}
-{"canonical_command":"find wordpress -maxdepth 1 -name '*js'","destructive":false,"goal":"Find every JavaScript file in the wordpress directory","id":"nl2bash_find_002","mode":"forward"}
-{"canonical_command":"find \/ -nouser -exec rm {} +","destructive":false,"goal":"Remove files from the file system that are owned by nobody","id":"nl2bash_find_003","mode":"forward"}
-{"canonical_command":"find ~ -size +10M","destructive":false,"goal":"Search for files bigger than 10M","id":"nl2bash_find_004","mode":"forward"}
-{"canonical_command":"finger | cut -d ' ' -f1 | sort -u | grep -iv login","destructive":false,"goal":"Print the sorted unique column of usernames of users who are currently logged in without the header","id":"nl2bash_finger_001","mode":"forward"}
-{"canonical_command":"fold -w3","destructive":false,"goal":"Print every 3 characters of standard input as a line","id":"nl2bash_fold_001","mode":"forward"}
-{"canonical_command":"fold -w79 yourfile | sed -e :a -e 's\/^.\\{0,78\\}$\/& \/;ta'","destructive":false,"goal":"Wrap each line in \"yourfile\" to fit in 79 characters and right pad any lines shorter with spaces","id":"nl2bash_fold_002","mode":"forward"}
-{"canonical_command":"getent group <groupname> | cut -d: -f4 |  tr ',' '\\n'","destructive":false,"goal":"List the users having <groupname> as their secondary group.","id":"nl2bash_getent_001","mode":"forward"}
-{"canonical_command":"git ls-files | grep -vE \"(png|jpg|ico)\" | xargs wc -l","destructive":false,"goal":"Counts the number of lines in each file but png|jpg|ico files in a git repository.","id":"nl2bash_git_001","mode":"forward"}
-{"canonical_command":"git ls-files | xargs file | grep \"ASCII\" | cut -d : -f 1 | xargs wc -l","destructive":false,"goal":"Look for all files managed by git in the current repository whose name or file type description contains the word \"ASCII\", display the number of lines contained in each match.","id":"nl2bash_git_002","mode":"forward"}
-{"canonical_command":"grep --include=\"*.xxx\" -nRHI \"my Text to grep\" *","destructive":false,"goal":"Recursively from current folder searches only files that names match \".*xxx\" pattern, ignores binary files and prints file name before every string that contains \"my Text to grep\".","id":"nl2bash_grep_001","mode":"forward"}
-{"canonical_command":"groups","destructive":false,"goal":"Finds out what groups a current user has.","id":"nl2bash_groups_001","mode":"forward"}
-{"canonical_command":"gunzip -t file.tar.gz","destructive":false,"goal":"Test if \"file.tar.gz\" is corrupt","id":"nl2bash_gunzip_001","mode":"forward"}
-{"canonical_command":"gunzip -c file.tar.gz | tar t > \/dev\/null","destructive":false,"goal":"Test if the tar file in \"file.tar.gz\" is corrupt","id":"nl2bash_gunzip_002","mode":"forward"}
-{"canonical_command":"gzcat large.csv.gz | split -l 1000 - xxx","destructive":false,"goal":"extract the content of the file large.csv.gz and split it into pieces per 1000 lines named as xxxNNN","id":"nl2bash_gzcat_001","mode":"forward"}
-{"canonical_command":"history -c","destructive":false,"goal":"Clear the terminal's search history","id":"nl2bash_history_001","mode":"forward"}
-{"canonical_command":"hostname  -i","destructive":false,"goal":"Print IP addresses of the host name","id":"nl2bash_hostname_001","mode":"forward"}
-{"canonical_command":"jobs | wc -l","destructive":false,"goal":"count amount of jobs running","id":"nl2bash_jobs_001","mode":"forward"}
-{"canonical_command":"jobs -p | xargs kill -9","destructive":false,"goal":"kill all active jobs","id":"nl2bash_jobs_002","mode":"forward"}
-{"canonical_command":"join -j 1 -t : -o 2.1,2.2,2.4,1.3 <(sort empsal) <(sort empname)","destructive":false,"goal":"For each line of colon-separated information in files 'empsal' and 'empname' whose first field matches in both files, output: first field of empname, second field of empname, fourth field of empname, and third field of empsal.","id":"nl2bash_join_001","mode":"forward"}
-{"canonical_command":"join -t, in1 in2","destructive":false,"goal":"Merge lines whose first comma-separated field in file 'in1' also appears as a first comma-separated in file 'in2' - both files must be sorted.","id":"nl2bash_join_002","mode":"forward"}
-{"canonical_command":"kill -15 $( lsof -i:6000 -t )","destructive":false,"goal":"Send SIGTERM (signal 15) to all processes using TCP port 6000 on the system.","id":"nl2bash_kill_001","mode":"forward"}
-{"canonical_command":"kill -s WINCH $$","destructive":false,"goal":"Send SIGWINCH process to current shell, causing it to update the LINES and COLUMNS variables which describe the size of the screen\/window in characters.","id":"nl2bash_kill_002","mode":"forward"}
-{"canonical_command":"ln -s newtarget temp","destructive":false,"goal":"Create a symbolic link named \"temp\" to \"newtarget\"","id":"nl2bash_ln_001","mode":"forward"}
-{"canonical_command":"ln -f -s \/apps\/myapps\/new\/link\/target mylink","destructive":false,"goal":"Force create a symbolic link named \"mylink\" with target \"\/apps\/myapps\/new\/link\/target\"","id":"nl2bash_ln_002","mode":"forward"}
-{"canonical_command":"ls -l $(find \/etc -name \"*.txt\" )","destructive":false,"goal":"List all *.txt files\/directories under \/etc","id":"nl2bash_ls_001","mode":"forward"}
-{"canonical_command":"ls -1t | head -1","destructive":false,"goal":"Prints latest modified file in a directory","id":"nl2bash_ls_002","mode":"forward"}
-{"canonical_command":"lspci -v -v | less","destructive":false,"goal":"Page through extended information about all PCI devices on system.","id":"nl2bash_lspci_001","mode":"forward"}
-{"canonical_command":"make || exit $?","destructive":false,"goal":"If first command fails, exits from script with exit code of failed command.","id":"nl2bash_make_001","mode":"forward"}
-{"canonical_command":"man find","destructive":false,"goal":"Show manual page of find utility","id":"nl2bash_man_001","mode":"forward"}
-{"canonical_command":"md5sum $(which gcc)","destructive":false,"goal":"Calculate the md5sum of the executable file of command \"gcc\"","id":"nl2bash_md5sum_001","mode":"forward"}
-{"canonical_command":"md5sum *.java | grep 0bee89b07a248e27c83fc3d5951213c1","destructive":false,"goal":"Find '.java' files with checksum 0bee89b07a248e27c83fc3d5951213c1 in the current directory","id":"nl2bash_md5sum_002","mode":"forward"}
-{"canonical_command":"md5sum \/path\/to\/destination\/file","destructive":false,"goal":"Print the MD5 message digest of \"\/path\/to\/destination\/file\"","id":"nl2bash_md5sum_003","mode":"forward"}
-{"canonical_command":"mkdir \/path\/to\/destination","destructive":false,"goal":"Make directory \"\/path\/to\/destination\"","id":"nl2bash_mkdir_001","mode":"forward"}
-{"canonical_command":"mkdir \/tmp\/new","destructive":false,"goal":"Make directory \"\/tmp\/new\"","id":"nl2bash_mkdir_002","mode":"forward"}
-{"canonical_command":"mkdir aaa","destructive":false,"goal":"create directory aaa","id":"nl2bash_mkdir_003","mode":"forward"}
-{"canonical_command":"more YourFile.txt","destructive":false,"goal":"Display the content of YourFile.txt, waiting for user input at each page.","id":"nl2bash_more_001","mode":"forward"}
-{"canonical_command":"sudo mv \/usr\/bin\/php \/usr\/bin\/~php","destructive":false,"goal":"Rename \"\/usr\/bin\/php\" to \"\/usr\/bin\/~php\"","id":"nl2bash_mv_001","mode":"forward"}
-{"canonical_command":"mv new old -b","destructive":false,"goal":"Rename \"new\" to \"old\" and make a backup if \"old\" exists","id":"nl2bash_mv_002","mode":"forward"}
-{"canonical_command":"od -xcb testscript.sh","destructive":false,"goal":"Dump \"testscript.sh\" as 2 byte hexadecimale, printable characters, and octal values","id":"nl2bash_od_001","mode":"forward"}
-{"canonical_command":"od -t x1 -An file |tr -d '\\n '","destructive":false,"goal":"Print contents of \"file\" as space separated hexadecimal bytes on a single line","id":"nl2bash_od_002","mode":"forward"}
-{"canonical_command":"paste -d\" \" - - < file | column -t","destructive":false,"goal":"Format contents of \"file\" as a table","id":"nl2bash_paste_001","mode":"forward"}
-{"canonical_command":"paste -sd+ filename | bc","destructive":false,"goal":"Mathematically add each line in \"filename\"","id":"nl2bash_paste_002","mode":"forward"}
-{"canonical_command":"pg_dump -U myUser myDB | gzip > myDB.sql.gz","destructive":false,"goal":"Dump \"myDB\" via \"pg_dump\" and compress to \"myDB.sql.gz\"","id":"nl2bash_pg_dump_001","mode":"forward"}
-{"canonical_command":"nohup php -f 'yourscript'.php","destructive":false,"goal":"Run the PHP script 'yourscript.php', making it immune to SIGHUP signals.","id":"nl2bash_php_001","mode":"forward"}
-{"canonical_command":"ping google.com | awk -f packet_loss.awk","destructive":false,"goal":"Use the output of \"ping google.com\" as input to awk script \"packet_loss.awk\"","id":"nl2bash_ping_001","mode":"forward"}
-{"canonical_command":"pr -n 'find . -type f -mtime -1 -print'|lpr","destructive":false,"goal":"Provide a list of all the files edited today to pr, and pipe pr's output to the printer","id":"nl2bash_pr_001","mode":"forward"}
-{"canonical_command":"printf \" %02d\" $(seq 1 30)","destructive":false,"goal":"Print numbers from 1 to 30 with 0 padding to a width of 2","id":"nl2bash_printf_001","mode":"forward"}
-{"canonical_command":"progam.sh 2>&1 | tee -a log","destructive":false,"goal":"Write the standard output and error of \"program.sh\" to console and append to \"log\"","id":"nl2bash_progam.sh_001","mode":"forward"}
-{"canonical_command":"ps aux | grep '[t]erminal'","destructive":false,"goal":"Find process \"terminal\" displaying the searching process","id":"nl2bash_ps_001","mode":"forward"}
-{"canonical_command":"ps aux | grep mysql | grep -v grep","destructive":false,"goal":"Find the process id of mysql","id":"nl2bash_ps_002","mode":"forward"}
-{"canonical_command":"ps -fp <pid>","destructive":false,"goal":"Get the command line args passed to a running process","id":"nl2bash_ps_003","mode":"forward"}
-{"canonical_command":"ps  -ef | grep $$ | grep -v grep","destructive":false,"goal":"Print current shell using process ID","id":"nl2bash_ps_004","mode":"forward"}
-{"canonical_command":"ps axu | grep jbos[s] | tr -s ' ' | cut -d' ' -f5","destructive":false,"goal":"Print virtual memory usage of all processes owned by \"jbos[s]\"","id":"nl2bash_ps_005","mode":"forward"}
-{"canonical_command":"pstree -p | grep git","destructive":false,"goal":"Composes full process tree with process id numbers, and prints only those strings that contain 'git'.","id":"nl2bash_pstree_001","mode":"forward"}
-{"canonical_command":"pstree -p -s PID","destructive":false,"goal":"Displays process tree of a process with id 'PID', showing parent process and processes id.","id":"nl2bash_pstree_002","mode":"forward"}
-{"canonical_command":"pstree -p [pid ...]","destructive":false,"goal":"Prints process list with id numbers of a process having id 'pid'.","id":"nl2bash_pstree_003","mode":"forward"}
-{"canonical_command":"rev file.txt","destructive":false,"goal":"Display each line in file.txt backwards","id":"nl2bash_rev_001","mode":"forward"}
-{"canonical_command":"rev   test.txt | sort  -k2 | rev","destructive":false,"goal":"Sort strings of 'test.txt' file by second from the end field","id":"nl2bash_rev_002","mode":"forward"}
-{"canonical_command":"rm -ri *","destructive":false,"goal":"Remove everything in a current folder prompting user on each action.","id":"nl2bash_rm_001","mode":"forward"}
-{"canonical_command":"rm -rf folderName","destructive":false,"goal":"Removes 'folderName', and removes all content within if 'folderName' is folder.","id":"nl2bash_rm_002","mode":"forward"}
-{"canonical_command":"rmdir latest","destructive":false,"goal":"Removes 'latest' folder if empty.","id":"nl2bash_rmdir_001","mode":"forward"}
-{"canonical_command":"rmdir ed*","destructive":false,"goal":"Removes any empty folder that matches pattern ed*.","id":"nl2bash_rmdir_002","mode":"forward"}
-{"canonical_command":"rsync -av \/path\/to\/files user@targethost:\/path","destructive":false,"goal":"Archive \"\/path\/to\/files\" to \"user@targethost:\/path\"","id":"nl2bash_rsync_001","mode":"forward"}
-{"canonical_command":"rsync -avz -e ssh --progress user@source-server:\/somedirA\/ somedirB\/","destructive":false,"goal":"Synchronize via ssh \"user@source-server:\/somedirA\/\" to \"somedirB\/\" with compressed data during transmission and display progress","id":"nl2bash_rsync_002","mode":"forward"}
-{"canonical_command":"ruby -e \"$(curl -fsSL https:\/\/raw.github.com\/Homebrew\/homebrew\/go\/install)\"","destructive":false,"goal":"Silently download contents from https:\/\/raw.github.com\/Homebrew\/homebrew\/go\/install and show an error if failed, execute with ruby after the download is completed","id":"nl2bash_ruby_001","mode":"forward"}
-{"canonical_command":"scp -r myServer:\/something","destructive":false,"goal":"Recursively copy directory or file \/something on host \"myServer\" to current directory on local host, connecting as ssh user matching username on local host.","id":"nl2bash_scp_001","mode":"forward"}
-{"canonical_command":"screen -S main","destructive":false,"goal":"Create a named screen session","id":"nl2bash_screen_001","mode":"forward"}
-{"canonical_command":"script -c \".\/a\" \/dev\/null | tee output.txt","destructive":false,"goal":"Print output of 'script -c \".\/a\" \/dev\/null' to standard output and \"output.txt\"","id":"nl2bash_script_001","mode":"forward"}
-{"canonical_command":"sed -i 's\/foo\/bar\/g' file","destructive":false,"goal":"Modify and rewrite 'file' replacing all instances of \"foo\" with \"bar\"","id":"nl2bash_sed_001","mode":"forward"}
-{"canonical_command":"sed -n '\/pattern\/!p' file","destructive":false,"goal":"Print all lines in file that do not match \"pattern\"","id":"nl2bash_sed_002","mode":"forward"}
-{"canonical_command":"sed 100q datafile | split -C 1700 -","destructive":false,"goal":"split the first 100 lines of the file \"datafile\" per lines with size 1700 bytes","id":"nl2bash_sed_003","mode":"forward"}
-{"canonical_command":"seq 1 10 | sort -R | tee \/tmp\/lst |cat <(cat \/tmp\/lst) <(echo '-------')","destructive":false,"goal":"Print a randomly sorted list of numbers from 1 to 10 to file \"\/tmp\/lst\" and the screen followed by \" -------\"","id":"nl2bash_seq_001","mode":"forward"}
-{"canonical_command":"seq 1 10 | sort -R | tee \/tmp\/lst |cat <(cat \/tmp\/lst) <(echo '-------') **...**","destructive":false,"goal":"Write a random list of numbers to \/tmp\/lst and stdout.","id":"nl2bash_seq_002","mode":"forward"}
-{"canonical_command":"sleep 1","destructive":false,"goal":"sleep for 1 second","id":"nl2bash_sleep_001","mode":"forward"}
-{"canonical_command":"somecommand | true","destructive":false,"goal":"Returns 0 exit status despite of 'somecommand' execution result.","id":"nl2bash_somecommand_001","mode":"forward"}
-{"canonical_command":"split -l 100 date.csv","destructive":false,"goal":"split file data.csv into pieces per 100 lines","id":"nl2bash_split_001","mode":"forward"}
-{"canonical_command":"split -n2 infile","destructive":false,"goal":"split the file \"file\" into pieces per 2 lines","id":"nl2bash_split_002","mode":"forward"}
-{"canonical_command":"ssh user@host -X","destructive":false,"goal":"Open a ssh connection to user@host with X11 forwarding to run GUI programs","id":"nl2bash_ssh_001","mode":"forward"}
-{"canonical_command":"ssh tunneluser@111.222.333.444 <<\\EOI","destructive":false,"goal":"SSH into \"111.222.333.444\" as user \"tunneluser\" without interpreting bash variables locally","id":"nl2bash_ssh_002","mode":"forward"}
-{"canonical_command":"ssh-keygen -l -f \/etc\/ssh\/ssh_host_ecdsa_key.pub","destructive":false,"goal":"Display the host's ECDSA fingerprint using the sha256 hasing algorithm.","id":"nl2bash_ssh-keygen_001","mode":"forward"}
-{"canonical_command":"ssh-keygen -f \"\/root\/.ssh\/known_hosts\" -R gitlab.site.org","destructive":false,"goal":"Remove gitlab.site.org from root's known hosts file.","id":"nl2bash_ssh-keygen_002","mode":"forward"}
-{"canonical_command":"ssh-keygen -pf private.key","destructive":false,"goal":"Request changing the passphrase of key file \"private.key\"","id":"nl2bash_ssh-keygen_003","mode":"forward"}
-{"canonical_command":"su - username","destructive":false,"goal":"login as user username","id":"nl2bash_su_001","mode":"forward"}
-{"canonical_command":"su - joe -c \"\/path\/to\/my_daemon & echo \\$! > \/tmp\/su.joe.$$\"","destructive":false,"goal":"run command \"\/path\/to\/my_daemon & echo \\$! > \/tmp\/su.joe.$$\" as user joe","id":"nl2bash_su_002","mode":"forward"}
-{"canonical_command":"tac file | rev","destructive":false,"goal":"Print lines of 'file' reverted order, and reverted characterwise","id":"nl2bash_tac_001","mode":"forward"}
-{"canonical_command":"tac file | sed -e '\/.\/,$!d' | tac | sed -e '\/.\/,$!d'","destructive":false,"goal":"Removes trailing and starting newlines from file","id":"nl2bash_tac_002","mode":"forward"}
-{"canonical_command":"tail -n +11 \/tmp\/myfile","destructive":false,"goal":"Print \"\/tmp\/myfile\" starting at line 11","id":"nl2bash_tail_001","mode":"forward"}
-{"canonical_command":"tail -n +1 file1.txt file2.txt file3.txt","destructive":false,"goal":"Print \"file1.txt\" \"file2.txt\" and \"file3.txt\" with filename headers","id":"nl2bash_tail_002","mode":"forward"}
-{"canonical_command":"tar -I pbzip2 -cf OUTPUT_FILE.tar.bz2 paths_to_archive","destructive":false,"goal":"create an archive using pbzip2 as a compress program","id":"nl2bash_tar_001","mode":"forward"}
-{"canonical_command":"tar czfP backup.tar.gz \/path\/to\/catalog","destructive":false,"goal":"create archive \"backup.tar.gz\" from \/path\/to\/catalog","id":"nl2bash_tar_002","mode":"forward"}
-{"canonical_command":"timeout 5 ssh user@ip","destructive":false,"goal":"Execute the SSH command and kill it after 5 seconds","id":"nl2bash_timeout_001","mode":"forward"}
-{"canonical_command":"top -l 1 -s 0 -stats vprvt -pid 8631","destructive":false,"goal":"Get virtual private memory use of process","id":"nl2bash_top_001","mode":"forward"}
-{"canonical_command":"touch -d '30 August 2013' *.php","destructive":false,"goal":"Set timestamp of all PHP files in current directory to date specified.","id":"nl2bash_touch_001","mode":"forward"}
-{"canonical_command":"tree -D","destructive":false,"goal":"Print the current directory tree with the date of last modification for each file or directory","id":"nl2bash_tree_001","mode":"forward"}
-{"canonical_command":"tree .","destructive":false,"goal":"Recursively print all files and directories in the current directory tree","id":"nl2bash_tree_002","mode":"forward"}
-{"canonical_command":"uname -n","destructive":false,"goal":"Display hostname.","id":"nl2bash_uname_001","mode":"forward"}
-{"canonical_command":"uname -a","destructive":false,"goal":"Display system information: kernel name, hostname, kernel release and version, machine architecture, processor type, hardware platform, and operating system type.","id":"nl2bash_uname_002","mode":"forward"}
-{"canonical_command":"vi $(find . -type f -name 'btree*.c')","destructive":false,"goal":"Run vi with all btree*.c files under current directory","id":"nl2bash_vi_001","mode":"forward"}
-{"canonical_command":"w | sort","destructive":false,"goal":"Prints logged in users in sorted order.","id":"nl2bash_w_001","mode":"forward"}
-{"canonical_command":"watch -n 3 -d .\/my_script.sh","destructive":false,"goal":"Execute \".\/my_script.sh\" every 3 seconds and highlight the differences in successive runs","id":"nl2bash_watch_001","mode":"forward"}
-{"canonical_command":"watch -n10 cat \/tmp\/iostat.running","destructive":false,"goal":"Execute \"cat \/tmp\/iostat.running\" every 10 seconds","id":"nl2bash_watch_002","mode":"forward"}
-{"canonical_command":"watch --interval=10 lynx -dump http:\/\/dslrouter\/stats.html","destructive":false,"goal":"Execute \"lynx -dump http:\/\/dslrouter\/stats.html\" every 10 seconds","id":"nl2bash_watch_003","mode":"forward"}
-{"canonical_command":"watch -n 5 -c 'tail -f -n 50 mylogfile.txt | ccze'","destructive":false,"goal":"Execute 'tail -f -n 50 mylogfile.txt | ccze' every 5 seconds and display with color support","id":"nl2bash_watch_004","mode":"forward"}
-{"canonical_command":"watch -n 0.1","destructive":false,"goal":"Modify interval to 0.1 seconds for the watch command","id":"nl2bash_watch_005","mode":"forward"}
-{"canonical_command":"wc -l **\/*.php","destructive":false,"goal":"Counts lines in each of *.php files in a current folder and subfolders and prints total count as well.","id":"nl2bash_wc_001","mode":"forward"}
-{"canonical_command":"who | sed -e 's\/[ \\t].*\/\/g'","destructive":false,"goal":"Print list of all user names who are logged in","id":"nl2bash_who_001","mode":"forward"}
-{"canonical_command":"who |grep -i admin |cut -c10-20","destructive":false,"goal":"Print the terminal file of the users who are logged in with \"admin\" in their name","id":"nl2bash_who_002","mode":"forward"}
-{"canonical_command":"yes | mv ...","destructive":false,"goal":"Continuously answer \"y\" to any prompt from \"mv ...\"","id":"nl2bash_yes_001","mode":"forward"}
-{"canonical_command":"yum search zsh","destructive":false,"goal":"Searches available packages by word 'zsh'.","id":"nl2bash_yum_001","mode":"forward"}
-{"canonical_command":"yum -y update","destructive":false,"goal":"Updates all packages in system  answering 'yes' on all questions.","id":"nl2bash_yum_002","mode":"forward"}
-{"canonical_command":"zcat large_file.gz | largesplitter","destructive":false,"goal":"Send uncompressed contents of \"large_file.gz\" to \"largesplitter\"","id":"nl2bash_zcat_001","mode":"forward"}
-{"canonical_command":"zcat small-*.gz | split -d -l2000000 -a 3 - large_","destructive":false,"goal":"Unzip and merge all \"small-*.gz\" files into files of 2000000 lines","id":"nl2bash_zcat_002","mode":"forward"}
-{"canonical_command":"zcat bigfile.z | sed -ne '500,1000 p'","destructive":false,"goal":"View line 500 to line 1000 in gzipped file \"bigfile.z\"","id":"nl2bash_zcat_003","mode":"forward"}
+{"goal": "Searches manual pages which descriptions contain 'postscript', and prints name and description of only ones that contain any-cased 'png' pattern.", "id": "nl2bash_apropos_001", "mode": "forward"}
+{"goal": "Copy the standard output of a \"bash\" session to \"/var/log/bash.out.log\"", "id": "nl2bash_bash_001", "mode": "forward"}
+{"goal": "check readline bindings for \"\\x61\"", "id": "nl2bash_bind_001", "mode": "forward"}
+{"goal": "print bindings for \"p\" and \"e\" with no case sensitivity", "id": "nl2bash_bind_002", "mode": "forward"}
+{"goal": "Symlinks all of formula’s installed files into the Homebrew prefix.", "id": "nl2bash_brew_001", "mode": "forward"}
+{"goal": "Displays calendar of a previous, current and next month for December of 2120 year.", "id": "nl2bash_cal_001", "mode": "forward"}
+{"goal": "Print the calendar for February 1956", "id": "nl2bash_cal_002", "mode": "forward"}
+{"goal": "Create a symbolic link in directory \"~/newlinks\" for each file listed in \"results2.txt\"", "id": "nl2bash_cat_001", "mode": "forward"}
+{"goal": "Find all *.foo files under current directory and print their contents", "id": "nl2bash_cat_002", "mode": "forward"}
+{"goal": "Print the grand total disk usage of all files listed in \"files.txt\"", "id": "nl2bash_cat_003", "mode": "forward"}
+{"goal": "Reversibly sorts content of the '${TMP}/${SCRIPT_NAME}.pid' file, comparing human readable numbers in file strings.", "id": "nl2bash_cat_004", "mode": "forward"}
+{"goal": "search for the text file \"file.txt\" and display its parent directory", "id": "nl2bash_cd_001", "mode": "forward"}
+{"goal": "Recursively changes group ownership of everything within a '/path/to/repo' to 'GROUP'.", "id": "nl2bash_chgrp_001", "mode": "forward"}
+{"goal": "Add read and execute permission to command \"node\"", "id": "nl2bash_chmod_001", "mode": "forward"}
+{"goal": "Treat each line of \"list-of-entries.txt\" as a value to be put in one cell of the table that \"column\" outputs", "id": "nl2bash_column_001", "mode": "forward"}
+{"goal": "Check if the contents of file \"subset\" is a subset of file \"set\"", "id": "nl2bash_comm_001", "mode": "forward"}
+{"goal": "Copies 'libgtest_main.so' and 'libgtest.so' to '/usr/lib/', preserving all attributes, and copying symlinks as symlinks, without following in source files.", "id": "nl2bash_cp_001", "mode": "forward"}
+{"goal": "download content from \"http://page.that.serves.json.com/json/\" and format it as json", "id": "nl2bash_curl_001", "mode": "forward"}
+{"goal": "download contents from website \"www.example.com\" using URL-encoding \"paramName=param\"", "id": "nl2bash_curl_002", "mode": "forward"}
+{"goal": "download contents of a website \"http://example.com/\"", "id": "nl2bash_curl_003", "mode": "forward"}
+{"goal": "Print timestamp as HH:MM:SS", "id": "nl2bash_date_001", "mode": "forward"}
+{"goal": "Reformat date \"Sat Aug 09 13:37:14 2014 +1100\" according to format string \"%a %b %d %H:%M:%S %Y %z\"", "id": "nl2bash_date_002", "mode": "forward"}
+{"goal": "Show the date in default format for tomorrow + 2 days + 10 minutes", "id": "nl2bash_date_003", "mode": "forward"}
+{"goal": "Print the file system disk space usage for \"/dev/disk0s2\" if exists", "id": "nl2bash_df_001", "mode": "forward"}
+{"goal": "Print total size of file systems in kilobytes.", "id": "nl2bash_df_002", "mode": "forward"}
+{"goal": "Compare each file in \"repos1/\" and \"repos2/\", treat absent files as empty, ignore differences in whitespace and tab expansions, and print 3 lines of unified context", "id": "nl2bash_diff_001", "mode": "forward"}
+{"goal": "Output all lines from file1 except those present in file2, assuming both files are sorted.", "id": "nl2bash_diff_002", "mode": "forward"}
+{"goal": "Print whether the sorted contents of \"set1\" and \"set2\" differ", "id": "nl2bash_diff_003", "mode": "forward"}
+{"goal": "Display the sizes and filepaths of all files/directories sorted in ascending order of size", "id": "nl2bash_du_001", "mode": "forward"}
+{"goal": "List each directory in the current directory prefixed with its disk usage in human readable format and sorted from smallest to largest", "id": "nl2bash_du_002", "mode": "forward"}
+{"goal": "Recursively finds strings with 'word-1' or 'word-2' in any file under 'directory-path', following symlinks, and prints found strings.", "id": "nl2bash_egrep_001", "mode": "forward"}
+{"goal": "Case-insensitive search all existing environment variables and their values for \"shell\".", "id": "nl2bash_env_001", "mode": "forward"}
+{"goal": "List all environment variables (name and value) whose name starts with GOROOT", "id": "nl2bash_env_002", "mode": "forward"}
+{"goal": "List an empty environment (prints nothing)", "id": "nl2bash_env_003", "mode": "forward"}
+{"goal": "Exits from process with exit code 255.", "id": "nl2bash_exit_001", "mode": "forward"}
+{"goal": "Display the mimetype of \"filename\"", "id": "nl2bash_file_001", "mode": "forward"}
+{"goal": "Find all directories under /home that doesn't contain a file/directory named 'bin'", "id": "nl2bash_find_001", "mode": "forward"}
+{"goal": "Find every JavaScript file in the wordpress directory", "id": "nl2bash_find_002", "mode": "forward"}
+{"goal": "Remove files from the file system that are owned by nobody", "id": "nl2bash_find_003", "mode": "forward"}
+{"goal": "Search for files bigger than 10M", "id": "nl2bash_find_004", "mode": "forward"}
+{"goal": "Print the sorted unique column of usernames of users who are currently logged in without the header", "id": "nl2bash_finger_001", "mode": "forward"}
+{"goal": "Print every 3 characters of standard input as a line", "id": "nl2bash_fold_001", "mode": "forward"}
+{"goal": "Wrap each line in \"yourfile\" to fit in 79 characters and right pad any lines shorter with spaces", "id": "nl2bash_fold_002", "mode": "forward"}
+{"goal": "List the users having <groupname> as their secondary group.", "id": "nl2bash_getent_001", "mode": "forward"}
+{"goal": "Counts the number of lines in each file but png|jpg|ico files in a git repository.", "id": "nl2bash_git_001", "mode": "forward"}
+{"goal": "Look for all files managed by git in the current repository whose name or file type description contains the word \"ASCII\", display the number of lines contained in each match.", "id": "nl2bash_git_002", "mode": "forward"}
+{"goal": "Recursively from current folder searches only files that names match \".*xxx\" pattern, ignores binary files and prints file name before every string that contains \"my Text to grep\".", "id": "nl2bash_grep_001", "mode": "forward"}
+{"goal": "Finds out what groups a current user has.", "id": "nl2bash_groups_001", "mode": "forward"}
+{"goal": "Test if \"file.tar.gz\" is corrupt", "id": "nl2bash_gunzip_001", "mode": "forward"}
+{"goal": "Test if the tar file in \"file.tar.gz\" is corrupt", "id": "nl2bash_gunzip_002", "mode": "forward"}
+{"goal": "extract the content of the file large.csv.gz and split it into pieces per 1000 lines named as xxxNNN", "id": "nl2bash_gzcat_001", "mode": "forward"}
+{"goal": "Clear the terminal's search history", "id": "nl2bash_history_001", "mode": "forward"}
+{"goal": "Print IP addresses of the host name", "id": "nl2bash_hostname_001", "mode": "forward"}
+{"goal": "count amount of jobs running", "id": "nl2bash_jobs_001", "mode": "forward"}
+{"goal": "kill all active jobs", "id": "nl2bash_jobs_002", "mode": "forward"}
+{"goal": "For each line of colon-separated information in files 'empsal' and 'empname' whose first field matches in both files, output: first field of empname, second field of empname, fourth field of empname, and third field of empsal.", "id": "nl2bash_join_001", "mode": "forward"}
+{"goal": "Merge lines whose first comma-separated field in file 'in1' also appears as a first comma-separated in file 'in2' - both files must be sorted.", "id": "nl2bash_join_002", "mode": "forward"}
+{"goal": "Send SIGTERM (signal 15) to all processes using TCP port 6000 on the system.", "id": "nl2bash_kill_001", "mode": "forward"}
+{"goal": "Send SIGWINCH process to current shell, causing it to update the LINES and COLUMNS variables which describe the size of the screen/window in characters.", "id": "nl2bash_kill_002", "mode": "forward"}
+{"goal": "Create a symbolic link named \"temp\" to \"newtarget\"", "id": "nl2bash_ln_001", "mode": "forward"}
+{"goal": "Force create a symbolic link named \"mylink\" with target \"/apps/myapps/new/link/target\"", "id": "nl2bash_ln_002", "mode": "forward"}
+{"goal": "List all *.txt files/directories under /etc", "id": "nl2bash_ls_001", "mode": "forward"}
+{"goal": "Prints latest modified file in a directory", "id": "nl2bash_ls_002", "mode": "forward"}
+{"goal": "Page through extended information about all PCI devices on system.", "id": "nl2bash_lspci_001", "mode": "forward"}
+{"goal": "If first command fails, exits from script with exit code of failed command.", "id": "nl2bash_make_001", "mode": "forward"}
+{"goal": "Show manual page of find utility", "id": "nl2bash_man_001", "mode": "forward"}
+{"goal": "Calculate the md5sum of the executable file of command \"gcc\"", "id": "nl2bash_md5sum_001", "mode": "forward"}
+{"goal": "Find '.java' files with checksum 0bee89b07a248e27c83fc3d5951213c1 in the current directory", "id": "nl2bash_md5sum_002", "mode": "forward"}
+{"goal": "Print the MD5 message digest of \"/path/to/destination/file\"", "id": "nl2bash_md5sum_003", "mode": "forward"}
+{"goal": "Make directory \"/path/to/destination\"", "id": "nl2bash_mkdir_001", "mode": "forward"}
+{"goal": "Make directory \"/tmp/new\"", "id": "nl2bash_mkdir_002", "mode": "forward"}
+{"goal": "create directory aaa", "id": "nl2bash_mkdir_003", "mode": "forward"}
+{"goal": "Display the content of YourFile.txt, waiting for user input at each page.", "id": "nl2bash_more_001", "mode": "forward"}
+{"goal": "Rename \"/usr/bin/php\" to \"/usr/bin/~php\"", "id": "nl2bash_mv_001", "mode": "forward"}
+{"goal": "Rename \"new\" to \"old\" and make a backup if \"old\" exists", "id": "nl2bash_mv_002", "mode": "forward"}
+{"goal": "Dump \"testscript.sh\" as 2 byte hexadecimale, printable characters, and octal values", "id": "nl2bash_od_001", "mode": "forward"}
+{"goal": "Print contents of \"file\" as space separated hexadecimal bytes on a single line", "id": "nl2bash_od_002", "mode": "forward"}
+{"goal": "Format contents of \"file\" as a table", "id": "nl2bash_paste_001", "mode": "forward"}
+{"goal": "Mathematically add each line in \"filename\"", "id": "nl2bash_paste_002", "mode": "forward"}
+{"goal": "Dump \"myDB\" via \"pg_dump\" and compress to \"myDB.sql.gz\"", "id": "nl2bash_pg_dump_001", "mode": "forward"}
+{"goal": "Run the PHP script 'yourscript.php', making it immune to SIGHUP signals.", "id": "nl2bash_php_001", "mode": "forward"}
+{"goal": "Use the output of \"ping google.com\" as input to awk script \"packet_loss.awk\"", "id": "nl2bash_ping_001", "mode": "forward"}
+{"goal": "Provide a list of all the files edited today to pr, and pipe pr's output to the printer", "id": "nl2bash_pr_001", "mode": "forward"}
+{"goal": "Print numbers from 1 to 30 with 0 padding to a width of 2", "id": "nl2bash_printf_001", "mode": "forward"}
+{"goal": "Write the standard output and error of \"program.sh\" to console and append to \"log\"", "id": "nl2bash_progam.sh_001", "mode": "forward"}
+{"goal": "Find process \"terminal\" displaying the searching process", "id": "nl2bash_ps_001", "mode": "forward"}
+{"goal": "Find the process id of mysql", "id": "nl2bash_ps_002", "mode": "forward"}
+{"goal": "Get the command line args passed to a running process", "id": "nl2bash_ps_003", "mode": "forward"}
+{"goal": "Print current shell using process ID", "id": "nl2bash_ps_004", "mode": "forward"}
+{"goal": "Print virtual memory usage of all processes owned by \"jbos[s]\"", "id": "nl2bash_ps_005", "mode": "forward"}
+{"goal": "Composes full process tree with process id numbers, and prints only those strings that contain 'git'.", "id": "nl2bash_pstree_001", "mode": "forward"}
+{"goal": "Displays process tree of a process with id 'PID', showing parent process and processes id.", "id": "nl2bash_pstree_002", "mode": "forward"}
+{"goal": "Prints process list with id numbers of a process having id 'pid'.", "id": "nl2bash_pstree_003", "mode": "forward"}
+{"goal": "Display each line in file.txt backwards", "id": "nl2bash_rev_001", "mode": "forward"}
+{"goal": "Sort strings of 'test.txt' file by second from the end field", "id": "nl2bash_rev_002", "mode": "forward"}
+{"goal": "Remove everything in a current folder prompting user on each action.", "id": "nl2bash_rm_001", "mode": "forward"}
+{"goal": "Removes 'folderName', and removes all content within if 'folderName' is folder.", "id": "nl2bash_rm_002", "mode": "forward"}
+{"goal": "Removes 'latest' folder if empty.", "id": "nl2bash_rmdir_001", "mode": "forward"}
+{"goal": "Removes any empty folder that matches pattern ed*.", "id": "nl2bash_rmdir_002", "mode": "forward"}
+{"goal": "Archive \"/path/to/files\" to \"user@targethost:/path\"", "id": "nl2bash_rsync_001", "mode": "forward"}
+{"goal": "Synchronize via ssh \"user@source-server:/somedirA/\" to \"somedirB/\" with compressed data during transmission and display progress", "id": "nl2bash_rsync_002", "mode": "forward"}
+{"goal": "Silently download contents from https://raw.github.com/Homebrew/homebrew/go/install and show an error if failed, execute with ruby after the download is completed", "id": "nl2bash_ruby_001", "mode": "forward"}
+{"goal": "Recursively copy directory or file /something on host \"myServer\" to current directory on local host, connecting as ssh user matching username on local host.", "id": "nl2bash_scp_001", "mode": "forward"}
+{"goal": "Create a named screen session", "id": "nl2bash_screen_001", "mode": "forward"}
+{"goal": "Print output of 'script -c \"./a\" /dev/null' to standard output and \"output.txt\"", "id": "nl2bash_script_001", "mode": "forward"}
+{"goal": "Modify and rewrite 'file' replacing all instances of \"foo\" with \"bar\"", "id": "nl2bash_sed_001", "mode": "forward"}
+{"goal": "Print all lines in file that do not match \"pattern\"", "id": "nl2bash_sed_002", "mode": "forward"}
+{"goal": "split the first 100 lines of the file \"datafile\" per lines with size 1700 bytes", "id": "nl2bash_sed_003", "mode": "forward"}
+{"goal": "Print a randomly sorted list of numbers from 1 to 10 to file \"/tmp/lst\" and the screen followed by \" -------\"", "id": "nl2bash_seq_001", "mode": "forward"}
+{"goal": "Write a random list of numbers to /tmp/lst and stdout.", "id": "nl2bash_seq_002", "mode": "forward"}
+{"goal": "sleep for 1 second", "id": "nl2bash_sleep_001", "mode": "forward"}
+{"goal": "Returns 0 exit status despite of 'somecommand' execution result.", "id": "nl2bash_somecommand_001", "mode": "forward"}
+{"goal": "split file data.csv into pieces per 100 lines", "id": "nl2bash_split_001", "mode": "forward"}
+{"goal": "split the file \"file\" into pieces per 2 lines", "id": "nl2bash_split_002", "mode": "forward"}
+{"goal": "Open a ssh connection to user@host with X11 forwarding to run GUI programs", "id": "nl2bash_ssh_001", "mode": "forward"}
+{"goal": "SSH into \"111.222.333.444\" as user \"tunneluser\" without interpreting bash variables locally", "id": "nl2bash_ssh_002", "mode": "forward"}
+{"goal": "Display the host's ECDSA fingerprint using the sha256 hasing algorithm.", "id": "nl2bash_ssh-keygen_001", "mode": "forward"}
+{"goal": "Remove gitlab.site.org from root's known hosts file.", "id": "nl2bash_ssh-keygen_002", "mode": "forward"}
+{"goal": "Request changing the passphrase of key file \"private.key\"", "id": "nl2bash_ssh-keygen_003", "mode": "forward"}
+{"goal": "login as user username", "id": "nl2bash_su_001", "mode": "forward"}
+{"goal": "run command \"/path/to/my_daemon & echo \\$! > /tmp/su.joe.$$\" as user joe", "id": "nl2bash_su_002", "mode": "forward"}
+{"goal": "Print lines of 'file' reverted order, and reverted characterwise", "id": "nl2bash_tac_001", "mode": "forward"}
+{"goal": "Removes trailing and starting newlines from file", "id": "nl2bash_tac_002", "mode": "forward"}
+{"goal": "Print \"/tmp/myfile\" starting at line 11", "id": "nl2bash_tail_001", "mode": "forward"}
+{"goal": "Print \"file1.txt\" \"file2.txt\" and \"file3.txt\" with filename headers", "id": "nl2bash_tail_002", "mode": "forward"}
+{"goal": "create an archive using pbzip2 as a compress program", "id": "nl2bash_tar_001", "mode": "forward"}
+{"goal": "create archive \"backup.tar.gz\" from /path/to/catalog", "id": "nl2bash_tar_002", "mode": "forward"}
+{"goal": "Execute the SSH command and kill it after 5 seconds", "id": "nl2bash_timeout_001", "mode": "forward"}
+{"goal": "Get virtual private memory use of process", "id": "nl2bash_top_001", "mode": "forward"}
+{"goal": "Set timestamp of all PHP files in current directory to date specified.", "id": "nl2bash_touch_001", "mode": "forward"}
+{"goal": "Print the current directory tree with the date of last modification for each file or directory", "id": "nl2bash_tree_001", "mode": "forward"}
+{"goal": "Recursively print all files and directories in the current directory tree", "id": "nl2bash_tree_002", "mode": "forward"}
+{"goal": "Display hostname.", "id": "nl2bash_uname_001", "mode": "forward"}
+{"goal": "Display system information: kernel name, hostname, kernel release and version, machine architecture, processor type, hardware platform, and operating system type.", "id": "nl2bash_uname_002", "mode": "forward"}
+{"goal": "Run vi with all btree*.c files under current directory", "id": "nl2bash_vi_001", "mode": "forward"}
+{"goal": "Prints logged in users in sorted order.", "id": "nl2bash_w_001", "mode": "forward"}
+{"goal": "Execute \"./my_script.sh\" every 3 seconds and highlight the differences in successive runs", "id": "nl2bash_watch_001", "mode": "forward"}
+{"goal": "Execute \"cat /tmp/iostat.running\" every 10 seconds", "id": "nl2bash_watch_002", "mode": "forward"}
+{"goal": "Execute \"lynx -dump http://dslrouter/stats.html\" every 10 seconds", "id": "nl2bash_watch_003", "mode": "forward"}
+{"goal": "Execute 'tail -f -n 50 mylogfile.txt | ccze' every 5 seconds and display with color support", "id": "nl2bash_watch_004", "mode": "forward"}
+{"goal": "Modify interval to 0.1 seconds for the watch command", "id": "nl2bash_watch_005", "mode": "forward"}
+{"goal": "Counts lines in each of *.php files in a current folder and subfolders and prints total count as well.", "id": "nl2bash_wc_001", "mode": "forward"}
+{"goal": "Print list of all user names who are logged in", "id": "nl2bash_who_001", "mode": "forward"}
+{"goal": "Print the terminal file of the users who are logged in with \"admin\" in their name", "id": "nl2bash_who_002", "mode": "forward"}
+{"goal": "Continuously answer \"y\" to any prompt from \"mv ...\"", "id": "nl2bash_yes_001", "mode": "forward"}
+{"goal": "Searches available packages by word 'zsh'.", "id": "nl2bash_yum_001", "mode": "forward"}
+{"goal": "Updates all packages in system  answering 'yes' on all questions.", "id": "nl2bash_yum_002", "mode": "forward"}
+{"goal": "Send uncompressed contents of \"large_file.gz\" to \"largesplitter\"", "id": "nl2bash_zcat_001", "mode": "forward"}
+{"goal": "Unzip and merge all \"small-*.gz\" files into files of 2000000 lines", "id": "nl2bash_zcat_002", "mode": "forward"}
+{"goal": "View line 500 to line 1000 in gzipped file \"bigfile.z\"", "id": "nl2bash_zcat_003", "mode": "forward"}

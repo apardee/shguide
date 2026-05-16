@@ -1,0 +1,44 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:shguide}",
+            "name": "Debug shguide",
+            "target": "shguide",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug shguide"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:shguide}",
+            "name": "Release shguide",
+            "target": "shguide",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release shguide"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:shguide}",
+            "name": "Debug shguide-eval",
+            "target": "shguide-eval",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug shguide-eval"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:shguide}",
+            "name": "Release shguide-eval",
+            "target": "shguide-eval",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release shguide-eval"
+        }
+    ]
+}

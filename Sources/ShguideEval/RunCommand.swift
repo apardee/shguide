@@ -54,16 +54,13 @@ struct RunCommand: AsyncParsableCommand {
     @Option(name: .customLong("temperature"), help: "Sampling temperature.")
     var temperature: Double = 0.2
 
-    @Flag(name: .customLong("include-destructive"), help: "Pass through to the engine.")
-    var includeDestructive: Bool = false
-
     @Option(name: .customLong("only-ids"), help: "Comma-separated row ids to run exclusively.")
     var onlyIds: String?
 
     @Option(name: .customLong("limit"), help: "Optional cap on number of rows to run.")
     var limit: Int?
 
-    @Option(name: .customLong("prompt-variant"), help: "Prompt variant: baseline, composition, or full.")
+    @Option(name: .customLong("prompt-variant"), help: "Prompt variant: baseline, composition, platform, etc.")
     var promptVariant: PromptVariant = .composition
 
     func run() async throws {
@@ -84,7 +81,7 @@ struct RunCommand: AsyncParsableCommand {
         let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
         let runTimestamp = ISO8601DateFormatter().string(from: Date())
 
-        stderr("Running \(chosen.count) rows × \(seeds) seeds with model=\(model), concurrency=\(concurrency)")
+        stderr("Running \(chosen.count) rows × \(seeds) seeds  model=\(model)  concurrency=\(concurrency)")
 
         let sem = Semaphore(count: concurrency)
         var indexedResults: [(Int, RawRowResult)] = []
@@ -119,10 +116,11 @@ struct RunCommand: AsyncParsableCommand {
             let data = try encoder.encode(r)
             lines.append(String(decoding: data, as: UTF8.self))
         }
-        let jsonl = lines.joined(separator: "\n") + "\n"
-        try jsonl.write(toFile: output, atomically: true, encoding: .utf8)
+        try (lines.joined(separator: "\n") + "\n").write(toFile: output, atomically: true, encoding: .utf8)
         stderr("Wrote \(rawResults.count) rows to \(output)")
     }
+
+    // MARK: - Row execution
 
     private func runRow(
         idx: Int, total: Int,
@@ -137,7 +135,7 @@ struct RunCommand: AsyncParsableCommand {
             osVersion: osVersion,
             pathBinaries: pathBinaries,
             historyMatches: [],
-            includeDestructive: includeDestructive,
+            includeDestructive: false,
             useTools: model == "foundation-models+tools"
         )
 
@@ -145,15 +143,11 @@ struct RunCommand: AsyncParsableCommand {
         for seed in 0..<seeds {
             let started = Date()
             do {
-                let trial = try await runTrialWithRetry(row: row, context: context, seed: seed)
-                trials.append(trial)
+                trials.append(try await runTrialWithRetry(row: row, context: context, seed: seed))
             } catch {
                 trials.append(RawTrial(
-                    seed: seed,
-                    suggestions: nil,
-                    explanation: nil,
+                    seed: seed, suggestions: nil, explanation: nil,
                     latencyMs: Int(Date().timeIntervalSince(started) * 1000),
-                    timestamp: ISO8601DateFormatter().string(from: started),
                     error: String(describing: error)
                 ))
             }
@@ -161,29 +155,19 @@ struct RunCommand: AsyncParsableCommand {
 
         let glyphs = trials.map { t -> String in
             guard t.error == nil else { return "E" }
-            let hasSuggestions = !(t.suggestions ?? []).isEmpty
-            let hasExplanation = t.explanation != nil
-            return (hasSuggestions || hasExplanation) ? "✓" : "✗"
+            return (!(t.suggestions ?? []).isEmpty || t.explanation != nil) ? "✓" : "✗"
         }.joined()
         stderr("[\(idx + 1)/\(total)] \(row.id)  \(glyphs)")
 
         return RawRowResult(
-            id: row.id,
-            mode: row.mode,
-            goal: row.goal,
-            command: row.command,
-            canonicalCommand: row.canonicalCommand,
-            expectedAnyOf: row.expectedAnyOf,
-            expectedSummaryContains: row.expectedSummaryContains,
-            destructive: row.destructive,
-            model: model,
-            promptVariant: promptVariant.rawValue,
-            temperature: temperature,
-            benchmarkVersion: benchmarkVersion,
-            runTimestamp: runTimestamp,
-            trials: trials
+            id: row.id, mode: row.mode, goal: row.goal, command: row.command,
+            model: model, promptVariant: promptVariant.rawValue,
+            temperature: temperature, benchmarkVersion: benchmarkVersion,
+            runTimestamp: runTimestamp, trials: trials
         )
     }
+
+    // MARK: - Trial execution
 
     private func runTrialWithRetry(row: EvalRow, context: InvocationContext, seed: Int) async throws -> RawTrial {
         let backoffs: [UInt64] = [500_000_000, 1_500_000_000, 4_000_000_000]
@@ -207,31 +191,26 @@ struct RunCommand: AsyncParsableCommand {
 
     private func runTrial(row: EvalRow, context: InvocationContext, seed: Int) async throws -> RawTrial {
         let started = Date()
-        let ts = ISO8601DateFormatter().string(from: started)
         let engine = makeEngine()
 
         switch row.mode {
         case "forward":
             guard let goal = row.goal else { throw RunError.malformedRow(row.id) }
             let suggestions = try await engine.forward(goal: goal, context: context)
-            let raw = suggestions.map { s in
-                RawSuggestion(command: s.command, explanation: s.explanation,
-                              risk: s.risk.rawValue, fromHistory: s.fromHistory)
-            }
+            let raw = suggestions.map { RawSuggestion(command: $0.command, explanation: $0.explanation) }
             return RawTrial(seed: seed, suggestions: raw, explanation: nil,
-                            latencyMs: Int(Date().timeIntervalSince(started) * 1000),
-                            timestamp: ts, error: nil)
+                            latencyMs: Int(Date().timeIntervalSince(started) * 1000), error: nil)
+
         case "describe":
             guard let cmd = row.command else { throw RunError.malformedRow(row.id) }
             let exp = try await engine.describe(command: cmd, context: context)
             let rawExp = RawExplanation(
                 summary: exp.summary,
-                parts: exp.parts.map { RawExplanationPart(token: $0.token, explanation: $0.explanation) },
-                containsDestructive: exp.containsDestructive
+                parts: exp.parts.map { RawExplanationPart(token: $0.token, explanation: $0.explanation) }
             )
             return RawTrial(seed: seed, suggestions: nil, explanation: rawExp,
-                            latencyMs: Int(Date().timeIntervalSince(started) * 1000),
-                            timestamp: ts, error: nil)
+                            latencyMs: Int(Date().timeIntervalSince(started) * 1000), error: nil)
+
         default:
             throw RunError.malformedRow(row.id)
         }
@@ -239,12 +218,9 @@ struct RunCommand: AsyncParsableCommand {
 
     private func makeEngine() -> any QueryEngine {
         switch model {
-        case "mock":
-            return MockEngine()
-        case "foundation-models+tools":
-            return FoundationModelsEngine(useTools: true, temperature: temperature, promptVariant: promptVariant)
-        default: // "foundation-models"
-            return FoundationModelsEngine(useTools: false, temperature: temperature, promptVariant: promptVariant)
+        case "mock":                     return MockEngine()
+        case "foundation-models+tools":  return FoundationModelsEngine(useTools: true, temperature: temperature, promptVariant: promptVariant)
+        default:                         return FoundationModelsEngine(useTools: false, temperature: temperature, promptVariant: promptVariant)
         }
     }
 
