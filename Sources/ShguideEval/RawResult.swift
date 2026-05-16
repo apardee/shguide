@@ -32,7 +32,6 @@ struct RawRowResult: Codable, Sendable {
     let command: String? // describe mode
 
     let model: String
-    let promptVariant: String
     let temperature: Double
     let benchmarkVersion: Int
     let runTimestamp: String
@@ -41,7 +40,6 @@ struct RawRowResult: Codable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id, mode, goal, command, model, temperature, trials
-        case promptVariant    = "prompt_variant"
         case benchmarkVersion = "benchmark_version"
         case runTimestamp     = "run_timestamp"
     }

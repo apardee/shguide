@@ -6,13 +6,11 @@ public struct FoundationModelsEngine: QueryEngine {
     public let useTools: Bool
     public let history: [String]
     public let temperature: Double
-    public let promptVariant: PromptVariant
 
-    public init(useTools: Bool = true, history: [String] = [], temperature: Double = 0.2, promptVariant: PromptVariant = .composition) {
+    public init(useTools: Bool = true, history: [String] = [], temperature: Double = 0.2) {
         self.useTools = useTools
         self.history = history
         self.temperature = temperature
-        self.promptVariant = promptVariant
     }
 
     public static func ensureAvailable() throws {
@@ -40,7 +38,7 @@ public struct FoundationModelsEngine: QueryEngine {
     public func forward(goal: String, context: InvocationContext) async throws -> [AnnotatedSuggestion] {
         try Self.ensureAvailable()
         let tools = buildTools(context: context)
-        let instructions = Prompts.forwardInstructions(context: context, variant: promptVariant)
+        let instructions = Prompts.forwardInstructions(context: context)
         let prompt = Prompts.forwardPrompt(goal: goal, context: context)
         let session = LanguageModelSession(tools: tools, instructions: instructions)
 
@@ -75,7 +73,6 @@ public struct FoundationModelsEngine: QueryEngine {
             throw EngineError.generationFailed(underlying: error)
         }
         let exp = result.content
-        // Trust our own destructive check over the model's claim.
         let containsDestructive = exp.containsDestructive || DestructivePolicy.isDestructive(command)
         return ForwardExplanation(
             summary: exp.summary,

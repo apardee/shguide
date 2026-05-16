@@ -2,8 +2,6 @@ import ArgumentParser
 import Foundation
 import ShguideCore
 
-extension PromptVariant: ExpressibleByArgument {}
-
 /// Bounded concurrency semaphore using a Swift actor.
 private actor Semaphore {
     private var count: Int
@@ -59,9 +57,6 @@ struct RunCommand: AsyncParsableCommand {
 
     @Option(name: .customLong("limit"), help: "Optional cap on number of rows to run.")
     var limit: Int?
-
-    @Option(name: .customLong("prompt-variant"), help: "Prompt variant: baseline, composition, platform, etc.")
-    var promptVariant: PromptVariant = .composition
 
     func run() async throws {
         guard seeds >= 1 else { throw ValidationError("--seeds must be >= 1") }
@@ -161,9 +156,9 @@ struct RunCommand: AsyncParsableCommand {
 
         return RawRowResult(
             id: row.id, mode: row.mode, goal: row.goal, command: row.command,
-            model: model, promptVariant: promptVariant.rawValue,
-            temperature: temperature, benchmarkVersion: benchmarkVersion,
-            runTimestamp: runTimestamp, trials: trials
+            model: model, temperature: temperature,
+            benchmarkVersion: benchmarkVersion, runTimestamp: runTimestamp,
+            trials: trials
         )
     }
 
@@ -218,9 +213,9 @@ struct RunCommand: AsyncParsableCommand {
 
     private func makeEngine() -> any QueryEngine {
         switch model {
-        case "mock":                     return MockEngine()
-        case "foundation-models+tools":  return FoundationModelsEngine(useTools: true, temperature: temperature, promptVariant: promptVariant)
-        default:                         return FoundationModelsEngine(useTools: false, temperature: temperature, promptVariant: promptVariant)
+        case "mock":                    return MockEngine()
+        case "foundation-models+tools": return FoundationModelsEngine(useTools: true, temperature: temperature)
+        default:                        return FoundationModelsEngine(useTools: false, temperature: temperature)
         }
     }
 
