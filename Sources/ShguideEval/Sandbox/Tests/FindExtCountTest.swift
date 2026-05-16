@@ -26,7 +26,9 @@ struct FindExtCountTest: SandboxTestCase {
         }
         let out = result.stdout
         let hasNumber = OutputValidator.firstInt(in: out) != nil
-        let hasExt = out.contains(".swift") || out.contains(".txt") || out.contains(".json")
+        // Accept with or without leading dot: `sed 's/.*\.//'` strips the dot,
+        // while `find -name` output retains it.
+        let hasExt = out.contains("swift") || out.contains("txt") || out.contains("json")
         let (ok, note) = OutputValidator.check([
             (hasNumber, "no numeric count in output"),
             (hasExt,    "no file extension name in output — command may not be grouping by type"),

@@ -1,20 +1,19 @@
 import Foundation
 
-/// wc_words_042 / wc_specific_099 / wc_bytes_080
+/// wc_words_042 / wc_specific_099 / wc_bytes_080 / count_lines_004
 ///
 /// Goal: "count the number of words in a file"
 ///
-/// Fixture: a file whose word and line counts are known exactly.
-/// - words: 42
-/// - lines: 7
-/// - bytes: tracked by the fixture content
+/// Fixture: notes.txt with known word/line counts, plus two .swift files
+/// so that count_lines_004 ("count lines in all swift files") produces output.
 ///
-/// The fixture file is named `notes.txt` to match the common placeholder
-/// used in wc_specific_099 ("count words in /tmp/notes.txt").
+/// Actual counts for notes.txt:
+/// - words: 51  (7 pangram lines, 6–9 words each)
+/// - lines: 7
 struct WordCountTest: SandboxTestCase {
     let rowIDs = ["wc_words_042", "wc_specific_099", "wc_bytes_080", "count_lines_004"]
 
-    // 7 lines, 42 words total.
+    // 7 lines, 51 words total.
     static let content = """
         the quick brown fox jumps over the lazy dog
         pack my box with five dozen liquor jugs
@@ -29,6 +28,11 @@ struct WordCountTest: SandboxTestCase {
 
     func setup(in dir: URL) throws {
         try SandboxFixtures.makeTextFile(name: Self.fileName, content: Self.content, in: dir)
+        // .swift files for count_lines_004 ("count lines in all swift files").
+        // Each file has exactly 5 lines.
+        let swiftContent = "import Foundation\n\nstruct Foo {\n    let x = 1\n}\n"
+        try SandboxFixtures.makeTextFile(name: "main.swift",  content: swiftContent, in: dir)
+        try SandboxFixtures.makeTextFile(name: "utils.swift", content: swiftContent, in: dir)
     }
 
     func score(command: String, result: ExecutionResult, in dir: URL) -> SandboxScore {
@@ -49,12 +53,21 @@ struct WordCountTest: SandboxTestCase {
             return SandboxScore(executable: true, correct: ok, executionMs: result.durationMs, note: note)
         }
 
-        // For word/line count: must contain 42 (words) or 7 (lines) depending
-        // on the flag used. We accept either because the model may choose -w or -l.
+        // count_lines_004 asks for lines in .swift files (2 files × 5 lines = 10 total,
+        // or 5 per file). Accept any plausible integer ≥ 5.
+        if command.contains(".swift") || command.contains("swift") && command.contains("wc") {
+            let (ok, note) = OutputValidator.check([
+                (!ints.isEmpty, "no numeric value in output — no .swift files matched or wrong path"),
+                (ints.contains { $0 >= 5 }, "expected ≥ 5 lines per .swift file, got \(ints)"),
+            ])
+            return SandboxScore(executable: true, correct: ok, executionMs: result.durationMs, note: note)
+        }
+
+        // For word/line count: accept 51 (words) or 7 (lines).
         let (ok, note) = OutputValidator.check([
             (!ints.isEmpty,                    "no numeric value in output"),
-            (ints.contains(42) || ints.contains(7),
-             "expected 42 (words) or 7 (lines) in output, got \(ints)"),
+            (ints.contains(51) || ints.contains(7),
+             "expected 51 (words) or 7 (lines) in output, got \(ints)"),
         ])
         return SandboxScore(executable: true, correct: ok, executionMs: result.durationMs, note: note)
     }

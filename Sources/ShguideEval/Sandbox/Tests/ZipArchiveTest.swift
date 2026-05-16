@@ -35,6 +35,18 @@ struct ZipArchiveTest: SandboxTestCase {
         process.waitUntilExit()
     }
 
+    // Inject -o (overwrite-without-prompting) into unzip commands that omit it.
+    // Without -o, unzip prompts interactively when destination files already
+    // exist (setup creates src/ before unzip runs). stdin is /dev/null in the
+    // sandbox, so unzip gets immediate EOF and chooses [N]one — but the prompt
+    // loop can still hang if there are multiple files. -o skips all prompts.
+    func prepareCommand(_ command: String) -> String {
+        guard command.hasPrefix("unzip"),
+              !command.contains("-o"),
+              let range = command.range(of: "unzip") else { return command }
+        return command.replacingCharacters(in: range, with: "unzip -o")
+    }
+
     func score(command: String, result: ExecutionResult, in dir: URL) -> SandboxScore {
         let exe = OutputValidator.executable(result)
         guard exe else {

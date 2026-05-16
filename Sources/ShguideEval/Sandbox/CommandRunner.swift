@@ -49,6 +49,10 @@ enum CommandRunner {
             "LANG": "en_US.UTF-8",
         ]
 
+        // Null out stdin so no child process can block waiting for terminal input
+        // (unzip without -o prompts for overwrite confirmation; zip can also prompt).
+        process.standardInput = FileHandle.nullDevice
+
         let stdoutPipe = Pipe()
         let stderrPipe = Pipe()
         process.standardOutput = stdoutPipe
@@ -64,6 +68,12 @@ enum CommandRunner {
                 exitCode: -1, timedOut: false, durationMs: 0
             )
         }
+
+        // Close the parent's write-ends immediately after the child starts.
+        // If we keep them open, readDataToEndOfFile() blocks forever because
+        // the OS sees a writer (us) still alive even after the child exits.
+        stdoutPipe.fileHandleForWriting.closeFile()
+        stderrPipe.fileHandleForWriting.closeFile()
 
         let timedOut = !waitWithTimeout(process: process, seconds: timeout)
         if timedOut { process.terminate() }
