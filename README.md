@@ -61,7 +61,9 @@ Apple's Foundation Models weren't specifically trained on shell commands. The mo
 - **Which tools are actually installed** — it sometimes suggests Linux-only commands like `sha256sum` that don't exist on macOS (the equivalent is `shasum -a 256`).
 - **Precise flag meanings** — it sometimes uses `-mtime +1` when you need `-mtime -1` (the sign matters), or reaches for `wc -l` (line count) when you asked for word count (`wc -w`).
 
-In sandbox evaluations against ~60 real tasks, the model produces a correct, runnable command roughly **40% of the time** without tools. With tools that look up binaries and man pages enabled, the rate doesn't improve much — the model calls the tools but doesn't always incorporate what they return.
+In sandbox evaluations against ~60 real tasks, the model produces a correct, runnable command roughly **40% of the time**.
+
+**Tool use is currently disabled.** The app has tools that let the model look up whether a binary exists and read man pages before suggesting a command — exactly what you'd want to catch the `sha256sum` / BSD `sed` class of errors. The problem is that the model calls them correctly but then ignores what they return: ask it to check `sha256sum`, it gets back "not found", and suggests `sha256sum` anyway. In eval, enabling tools made things *worse* — the extra context added to each request pushed some prompts over a stability threshold, causing the model to produce no output at all. Net result: more errors, same accuracy, 3× the latency. Tools are wired up and ready to re-enable if a future model revision handles tool results more faithfully.
 
 ### What this means in practice
 
@@ -72,13 +74,19 @@ In sandbox evaluations against ~60 real tasks, the model produces a correct, run
 
 ## Evaluation
 
-The repo includes a sandbox-based eval harness that actually runs generated commands in an isolated environment and checks whether they produce correct output. Results above come from that harness.
+The repo includes a sandbox-based eval harness that actually runs generated commands in an isolated environment and checks whether they produce correct output. Results above come from that harness. Benchmark history and methodology are in [docs/BENCHMARK_HISTORY.md](docs/BENCHMARK_HISTORY.md).
 
 ```sh
 # Run the model against a dataset and score the results
-shguide-eval run --dataset Datasets/eval_v2.jsonl --output out/run.jsonl
-shguide-eval sandbox-score --input out/run.jsonl --report out/report.json
+shguide-eval run --dataset Datasets/eval_v2.jsonl --output .output/run.jsonl
+shguide-eval sandbox-score --input .output/run.jsonl --report .output/report.json
 ```
 
 See [docs/EVAL.md](docs/EVAL.md) for details on how the eval works.
+
+The evaluation dataset includes examples derived from the [NL2Bash corpus](https://github.com/TellinaTool/nl2bash/tree/master/data/bash).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 

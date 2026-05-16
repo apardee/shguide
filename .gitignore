@@ -6,6 +6,6 @@ DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
-out/
+.output/
 Adapters/checkpoints/
 Adapters/*.fmadapter

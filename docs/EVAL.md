@@ -51,14 +51,14 @@ shguide-eval run --dataset Datasets/eval_v1.jsonl --strategy mock
 
 # Real on-device engine, no tools — pure prompting baseline
 shguide-eval run --dataset Datasets/eval_v1.jsonl --strategy generable-only \
-                 --report out/eval-plain.json
+                 --report .output/eval-plain.json
 
 # Real on-device engine, with verification tools
 shguide-eval run --dataset Datasets/eval_v1.jsonl --strategy generable-with-tools \
-                 --report out/eval-tools.json
+                 --report .output/eval-tools.json
 
 # Compare two runs
-shguide-eval compare out/eval-plain.json out/eval-tools.json
+shguide-eval compare .output/eval-plain.json .output/eval-tools.json
 ```
 
 `--limit N` runs the first N rows only — useful while iterating on prompts.
