@@ -1,76 +1,101 @@
 # shguide eval harness
 
-The eval harness measures how well a given engine + strategy answers the seed dataset. It is the longitudinal benchmark we run as the on-device model improves, or as we try new strategies (tools, RAG, adapters).
+The eval harness is a benchmark that measures how well the on-device model answers shell command prompts by actually running the generated commands in a sandbox and checking whether they work.
 
 ## Dataset
 
-`Datasets/eval_v1.jsonl` — one JSON object per line.
+`Datasets/eval_v2.jsonl` — 125 rows, one JSON object per line.
 
-**Forward row:**
+**Forward row** (natural language → command):
 ```json
-{
-  "id": "find_large_files_001",
-  "mode": "forward",
-  "goal": "find large files in this subdirectory sorted by size",
-  "expected_any_of": [
-    {"command_pattern": "^find \\.", "must_include_tokens": ["find", "-size"]},
-    {"command_pattern": "^du",       "must_include_tokens": ["du", "sort"]}
-  ],
-  "destructive": false
-}
+{"id": "find_large_files_001", "mode": "forward", "goal": "find large files in this subdirectory sorted by size"}
 ```
-- `expected_any_of` — list of acceptable shapes. A row passes coverage if *any* returned suggestion matches *any* entry.
-- A match requires the `command_pattern` regex (if present) to fire AND every `must_include_tokens` substring to appear AND every `must_not_include` substring to be absent.
 
-**Describe row:**
+**Describe row** (command → explanation):
 ```json
-{
-  "id": "describe_grep_pipeline_026",
-  "mode": "describe",
-  "command": "grep -r \"ERROR\" /var/log/nginx/ | cut -d ' ' -f 5 | sort | uniq -c",
-  "expected_summary_contains": ["grep", "sort", "uniq"],
-  "destructive": false
-}
+{"id": "describe_grep_pipeline_026", "mode": "describe", "command": "grep -r \"ERROR\" /var/log/nginx/ | cut -d ' ' -f 5 | sort | uniq -c"}
 ```
-A describe row passes coverage if every keyword in `expected_summary_contains` appears anywhere in the explanation (summary + parts).
 
-## Scorers
+That's the whole format. No expected-output patterns — correctness is determined by the sandbox test cases.
+
+## Metrics
 
 | Metric | Definition |
 |---|---|
-| **Coverage** | At least one suggestion matches an `expected_any_of` entry (forward) or all keywords are present in the explanation (describe). |
-| **Validity** | Every suggestion's leading binary in each pipeline segment is on `$PATH` or a known shell builtin. Run via `CommandValidator.looksRunnable`. |
-| **Safety** | For non-destructive rows: no destructive suggestion sneaks through. For destructive rows: the explanation correctly flags `containsDestructive`. |
-| **Latency** | Per-row wall time; harness reports median and p95. |
+| **Executable rate** | Fraction of trials where the command launched and ran without a timeout or launch error. |
+| **Correct rate** | Fraction of trials where the command's output or side effects matched the test expectation. |
+
+See [BENCHMARK_HISTORY.md](BENCHMARK_HISTORY.md) for current results.
 
 ## Running
 
+```sh
+# Run the model against the dataset
+shguide-eval run \
+  --dataset Datasets/eval_v2.jsonl \
+  --model foundation-models \
+  --output .output/run.jsonl \
+  --seeds 2
+
+# Score the results through the sandbox
+shguide-eval sandbox-score \
+  --input .output/run.jsonl \
+  --report .output/report.json \
+  --verbose
 ```
-# Mock engine — fast sanity check
-shguide-eval run --dataset Datasets/eval_v1.jsonl --strategy mock
 
-# Real on-device engine, no tools — pure prompting baseline
-shguide-eval run --dataset Datasets/eval_v1.jsonl --strategy generable-only \
-                 --report .output/eval-plain.json
+**`--model` options:** `foundation-models`, `foundation-models+tools`, `mock`
 
-# Real on-device engine, with verification tools
-shguide-eval run --dataset Datasets/eval_v1.jsonl --strategy generable-with-tools \
-                 --report .output/eval-tools.json
+**`--seeds N`** runs each row N times independently. 2 is enough to spot instability; 1 is fine for a quick pass.
 
-# Compare two runs
-shguide-eval compare .output/eval-plain.json .output/eval-tools.json
+**`--only-ids a,b,c`** runs a subset of rows — useful when iterating on a specific failure.
+
+**`--limit N`** runs the first N rows only.
+
+## How the sandbox works
+
+Each forward row that has a registered test case gets its own isolated temp directory. The test case:
+
+1. **Sets up fixtures** — creates the files, directories, or archives the command is expected to operate on.
+2. **Rewrites the command if needed** — e.g. `prepareCommand` redirects `ping` to loopback, or rewrites `/tmp/notes.txt` to the sandbox-relative fixture path.
+3. **Runs the command** inside a Seatbelt sandbox (`sandbox-exec`) that confines file writes to the temp directory and blocks network access (except where the test explicitly allows it).
+4. **Scores the result** — checks stdout content, filesystem state, or exit code against known expectations.
+
+The sandbox allows reads from anywhere (so `find /var/log` works) but blocks writes outside the temp dir. Commands time out after 10 seconds.
+
+## Adding a dataset row
+
+1. Add a JSONL line to `Datasets/eval_v2.jsonl` with a unique `id`, a `mode`, and either `goal` (forward) or `command` (describe).
+2. Optionally add a sandbox test case (see below) so the row gets an execution-based score rather than showing up as `tested: false`.
+3. Run `shguide-eval run --only-ids <your-id>` and then `sandbox-score` to verify it behaves as expected.
+
+## Adding a sandbox test case
+
+Test cases live in `Sources/ShguideEval/Sandbox/Tests/`. Each is a Swift struct conforming to `SandboxTestCase`:
+
+```swift
+struct MyNewTest: SandboxTestCase {
+    let rowIDs = ["my_row_001"]
+
+    func setup(in dir: URL) throws {
+        // create fixture files the command should operate on
+        try SandboxFixtures.makeTextFile(name: "data.txt", content: "hello\n", in: dir)
+    }
+
+    func score(command: String, result: ExecutionResult, in dir: URL) -> SandboxScore {
+        let exe = OutputValidator.executable(result)
+        guard exe else {
+            return SandboxScore(executable: false, correct: nil, executionMs: result.durationMs,
+                                note: "did not launch: \(result.stderr.prefix(120))")
+        }
+        let (ok, note) = OutputValidator.check([
+            (result.stdout.contains("hello"), "expected 'hello' in output"),
+        ])
+        return SandboxScore(executable: true, correct: ok, executionMs: result.durationMs, note: note)
+    }
+}
 ```
 
-`--limit N` runs the first N rows only — useful while iterating on prompts.
+Register it in `SandboxRegistry.swift` by adding an instance to the `all` array.
 
-## Adding a row
-
-1. Add a JSONL line to `Datasets/eval_v1.jsonl`. Use a unique `id`.
-2. Keep `expected_any_of` permissive enough that *correct* alternative answers pass. The dataset's job is to catch regressions, not to enforce one canonical answer.
-3. Run the eval against the previous best strategy and check the row scores correctly.
-
-## Adding a strategy
-
-1. Either reuse `FoundationModelsEngine` with different flags, or implement another `QueryEngine` conformance in `ShguideCore`.
-2. Add a case to `Strategy` in `Sources/ShguideEval/RunCommand.swift`.
-3. Run side-by-side with the current ship strategy and use `shguide-eval compare` to decide.
+For commands that require network (e.g. ping), set `networkPolicy` to `.outboundToHosts(["hostname"])` — the sandbox resolves hostnames to IPs before applying the Seatbelt profile. For commands that can't run in a sandbox at all (e.g. ICMP requires root), implement `prepareCommand` to rewrite the command to something testable, or score by string inspection only and note the limitation.
