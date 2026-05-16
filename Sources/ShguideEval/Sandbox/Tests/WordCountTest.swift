@@ -26,6 +26,12 @@ struct WordCountTest: SandboxTestCase {
 
     static let fileName = "notes.txt"
 
+    // wc_specific_099 references /tmp/notes.txt. Rewrite to the sandbox-relative
+    // fixture name so the command can actually read the file.
+    func prepareCommand(_ command: String) -> String {
+        command.replacingOccurrences(of: "/tmp/notes.txt", with: "notes.txt")
+    }
+
     func setup(in dir: URL) throws {
         try SandboxFixtures.makeTextFile(name: Self.fileName, content: Self.content, in: dir)
         // .swift files for count_lines_004 ("count lines in all swift files").
@@ -46,7 +52,11 @@ struct WordCountTest: SandboxTestCase {
 
         // For wc_bytes_080 the model is asked for byte count, not word count.
         // Accept any reasonable non-zero integer in the output.
-        if command.contains("-c") || command.contains("bytes") {
+        // Recognised patterns: wc -c, ls -l | awk '{print $5}', stat, etc.
+        let isByteCount = command.contains("-c") || command.contains("bytes")
+                       || (command.contains("ls") && command.contains("awk"))
+                       || command.contains("stat")
+        if isByteCount {
             let (ok, note) = OutputValidator.check([
                 (!ints.isEmpty, "no numeric value in output"),
             ])

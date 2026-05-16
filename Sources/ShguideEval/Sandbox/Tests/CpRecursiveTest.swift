@@ -42,8 +42,18 @@ struct CpRecursiveTest: SandboxTestCase {
             return has1 || has2
         }
 
+        // Also accept a tar/zip archive as a valid backup strategy — backup_ambig_108
+        // ("back up an important directory somewhere safe") can legitimately be answered
+        // with either `cp -r` or `tar -czf`/`zip -r`.
+        let contents = (try? fm.contentsOfDirectory(atPath: dir.path)) ?? []
+        let hasArchive = contents.contains {
+            ($0.hasSuffix(".tar.gz") || $0.hasSuffix(".tgz") || $0.hasSuffix(".zip") || $0.hasSuffix(".tar"))
+            && $0 != "_tar_staging"
+        }
+
         let (ok, note) = OutputValidator.check([
-            (copied, "no copy of src/ found containing the fixture files — command may have used wrong paths or omitted -r flag"),
+            (copied || hasArchive,
+             "no copy of src/ (directory) or backup archive (.tar.gz / .zip) found — wrong paths or missing flags"),
         ])
         return SandboxScore(executable: true, correct: ok, executionMs: result.durationMs, note: note)
     }

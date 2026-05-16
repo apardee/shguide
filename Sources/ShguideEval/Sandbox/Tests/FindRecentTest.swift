@@ -15,6 +15,14 @@ struct FindRecentTest: SandboxTestCase {
                   "find_logs_specific_091"]
 
     func setup(in dir: URL) throws {
+        // Create .zshrc with a modification time 1 hour in the past so that
+        // `find . -newer ~/.zshrc` (where HOME = sandbox dir) correctly returns
+        // recent.txt and report.log, which are created after .zshrc.
+        let zshrcURL = dir.appending(path: ".zshrc")
+        try SandboxFixtures.makeTextFile(name: ".zshrc", content: "# reference\n", in: dir)
+        let pastDate = Date(timeIntervalSinceNow: -3600)
+        try FileManager.default.setAttributes([.modificationDate: pastDate], ofItemAtPath: zshrcURL.path)
+
         try SandboxFixtures.makeTextFile(name: "recent.txt", content: "fresh\n", in: dir)
         try SandboxFixtures.makeTextFile(name: "report.log", content: "log entry\n", in: dir)
     }

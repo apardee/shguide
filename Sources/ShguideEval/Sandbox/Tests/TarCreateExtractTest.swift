@@ -30,6 +30,16 @@ struct TarCreateExtractTest: SandboxTestCase {
         )
     }
 
+    // untar_specific_100 targets -C /opt/app, which is outside the sandbox dir.
+    // Rewrite any absolute -C destination to "." so extraction lands in the
+    // sandbox working directory where the scorer can find the files.
+    func prepareCommand(_ command: String) -> String {
+        guard let range = command.range(of: #"\s+-C\s+/\S+"#, options: .regularExpression) else {
+            return command
+        }
+        return command.replacingCharacters(in: range, with: " -C .")
+    }
+
     func score(command: String, result: ExecutionResult, in dir: URL) -> SandboxScore {
         let exe = OutputValidator.executable(result)
         guard exe else {
@@ -37,14 +47,18 @@ struct TarCreateExtractTest: SandboxTestCase {
                                 note: "did not launch (exit \(result.exitCode)): \(result.stderr.prefix(120))")
         }
 
+        // zip -r is also a valid create operation; unzip is the extract counterpart.
         let isCreate = command.contains("-c") || command.contains("czf") || command.contains("create")
+                    || (command.hasPrefix("zip") && !command.contains("unzip"))
 
         if isCreate {
-            // Check that a .tar.gz or .tgz file now exists in the sandbox dir.
+            // Check that a compressed archive now exists in the sandbox dir.
             let contents = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
-            let hasArchive = contents.contains { $0.hasSuffix(".tar.gz") || $0.hasSuffix(".tgz") || $0.hasSuffix(".tar") }
+            let hasArchive = contents.contains {
+                $0.hasSuffix(".tar.gz") || $0.hasSuffix(".tgz") || $0.hasSuffix(".tar") || $0.hasSuffix(".zip")
+            }
             let (ok, note) = OutputValidator.check([
-                (hasArchive, "no .tar.gz archive found after command — wrong flags or missing source path"),
+                (hasArchive, "no archive (.tar.gz / .zip) found after command — wrong flags or missing source path"),
             ])
             return SandboxScore(executable: true, correct: ok, executionMs: result.durationMs, note: note)
         } else {

@@ -26,6 +26,23 @@ struct GrepIgnoreCaseTest: SandboxTestCase {
     }
 
     func score(command: String, result: ExecutionResult, in dir: URL) -> SandboxScore {
+        // grep_specific_092 targets /src/main.swift which doesn't exist in the sandbox.
+        // String-verify the command structure instead of running it.
+        let targetsAbsolutePath: Bool = {
+            let tokens = command.split(separator: " ").map(String.init)
+            return tokens.last?.hasPrefix("/") == true
+        }()
+        if targetsAbsolutePath {
+            let hasIgnoreCase = command.contains("-i") || command.contains("--ignore-case")
+            let (ok, note) = OutputValidator.check([
+                (hasIgnoreCase, "missing -i / --ignore-case flag for case-insensitive grep"),
+            ])
+            return SandboxScore(
+                executable: true, correct: ok, executionMs: 0,
+                note: ok ? "(string-verified — absolute path not available in sandbox)" : note
+            )
+        }
+
         let exe = OutputValidator.executable(result)
         guard exe else {
             return SandboxScore(executable: false, correct: nil, executionMs: result.durationMs,
