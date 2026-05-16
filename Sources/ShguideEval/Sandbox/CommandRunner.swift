@@ -1,142 +1,137 @@
 import Foundation
 import Darwin
+import System
+import Subprocess
 import ShguideCore
 
 /// Runs a shell command inside a Seatbelt (sandbox-exec) sandbox.
 ///
-/// Defense layers, applied in order:
-/// 1. `DestructivePolicy` — rejects known-destructive patterns before launch.
+/// Uses the Swift Subprocess package instead of Foundation.Process to avoid
+/// the inherited-pipe-write-end problem: Foundation.Process retains its copy
+/// of the stdout/stderr pipe write-ends after the child starts, which causes
+/// `readDataToEndOfFile()` to block forever on commands that don't produce
+/// output (zip, tar, unzip). Subprocess manages pipe lifetimes automatically.
+///
+/// Defense layers applied in order:
+/// 1. `DestructivePolicy` — rejects known-destructive commands before launch.
 /// 2. Seatbelt profile — file writes confined to `dir`; network access
-///    controlled by `networkPolicy`; standard system paths are readable.
-/// 3. Hard timeout — terminates any runaway process.
+///    controlled by `networkPolicy`.
+/// 3. Task-cancellation timeout — subprocess receives SIGKILL after `timeout`.
 enum CommandRunner {
 
     static let defaultTimeout: TimeInterval = 10.0
 
     // MARK: - Public API
 
-    /// Blocking. Use `runAsync` from async contexts.
-    static func run(
-        _ command: String,
-        in dir: URL,
-        networkPolicy: SandboxNetworkPolicy = .none,
-        timeout: TimeInterval = defaultTimeout
-    ) -> ExecutionResult {
-        if DestructivePolicy.isDestructive(command) {
-            return .blocked("destructive command blocked by policy")
-        }
-
-        // Resolve hostnames to IPs *before* entering the sandbox so that
-        // the profile can allowlist specific addresses.
-        let allowedIPs = resolveNetworkPolicy(networkPolicy)
-
-        // Resolve symlinks on the sandbox dir so the Seatbelt profile path
-        // matches what the kernel sees. On macOS /var → /private/var, so a
-        // path like /var/folders/... would not match the profile without this.
-        let sandboxDirPath = canonicalPath(dir.path)
-
-        let profile = seatbeltProfile(sandboxDir: sandboxDirPath, allowedIPs: allowedIPs)
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
-        process.arguments = ["-p", profile, "/bin/sh", "-c", command]
-        process.currentDirectoryURL = URL(fileURLWithPath: sandboxDirPath)
-        process.environment = [
-            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
-            "HOME": sandboxDirPath,   // remap HOME so ~/.* mutations go inside the sandbox
-            "TMPDIR": sandboxDirPath, // redirect temp file creation
-            "TERM": "dumb",
-            "LANG": "en_US.UTF-8",
-        ]
-
-        // Null out stdin so no child process can block waiting for terminal input
-        // (unzip without -o prompts for overwrite confirmation; zip can also prompt).
-        process.standardInput = FileHandle.nullDevice
-
-        let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
-
-        let start = Date()
-
-        do {
-            try process.run()
-        } catch {
-            return ExecutionResult(
-                stdout: "", stderr: error.localizedDescription,
-                exitCode: -1, timedOut: false, durationMs: 0
-            )
-        }
-
-        // Close the parent's write-ends immediately after the child starts.
-        // If we keep them open, readDataToEndOfFile() blocks forever because
-        // the OS sees a writer (us) still alive even after the child exits.
-        stdoutPipe.fileHandleForWriting.closeFile()
-        stderrPipe.fileHandleForWriting.closeFile()
-
-        let timedOut = !waitWithTimeout(process: process, seconds: timeout)
-        if timedOut { process.terminate() }
-
-        let elapsed = Int(Date().timeIntervalSince(start) * 1000)
-        let stdout = String(
-            data: stdoutPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8
-        ) ?? ""
-        let stderr = String(
-            data: stderrPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8
-        ) ?? ""
-
-        return ExecutionResult(
-            stdout: stdout, stderr: stderr,
-            exitCode: timedOut ? -1 : process.terminationStatus,
-            timedOut: timedOut, durationMs: elapsed
-        )
-    }
-
-    /// Async wrapper — offloads the blocking call to a dedicated thread.
     static func runAsync(
         _ command: String,
         in dir: URL,
         networkPolicy: SandboxNetworkPolicy = .none,
         timeout: TimeInterval = defaultTimeout
     ) async -> ExecutionResult {
-        await withCheckedContinuation { continuation in
-            let thread = Thread {
-                continuation.resume(
-                    returning: run(command, in: dir, networkPolicy: networkPolicy, timeout: timeout)
+        if DestructivePolicy.isDestructive(command) {
+            return .blocked("destructive command blocked by policy")
+        }
+
+        let allowedIPs   = resolveNetworkPolicy(networkPolicy)
+        let sandboxDirPath = canonicalPath(dir.path)
+        let profile      = seatbeltProfile(sandboxDir: sandboxDirPath, allowedIPs: allowedIPs)
+
+        let start = Date()
+
+        do {
+            let record = try await withProcessTimeout(seconds: timeout) {
+                // `run` here is the free function from the Subprocess module.
+                // `input: .none` closes stdin automatically — no /dev/null dance needed.
+                try await run(
+                    .path(FilePath("/usr/bin/sandbox-exec")),
+                    arguments: ["-p", profile, "/bin/sh", "-c", command],
+                    environment: .custom([
+                        "PATH"  : "/usr/bin:/bin:/usr/sbin:/sbin",
+                        "HOME"  : sandboxDirPath,
+                        "TMPDIR": sandboxDirPath,
+                        "TERM"  : "dumb",
+                        "LANG"  : "en_US.UTF-8",
+                    ]),
+                    workingDirectory: FilePath(sandboxDirPath),
+                    input: .none,
+                    output: .string(limit: 4 * 1024 * 1024),
+                    error:  .string(limit: 64 * 1024)
                 )
             }
-            thread.start()
+
+            let elapsed  = Int(Date().timeIntervalSince(start) * 1000)
+            let stdout   = record.standardOutput ?? ""
+            let stderr   = record.standardError  ?? ""
+
+            // Map TerminationStatus to the Int32 exit code our callers expect.
+            let exitCode: Int32
+            switch record.terminationStatus {
+            case .exited(let code):  exitCode = code
+            case .signaled:          exitCode = -1  // process was killed by a signal
+            }
+
+            return ExecutionResult(
+                stdout: stdout, stderr: stderr,
+                exitCode: exitCode, timedOut: false, durationMs: elapsed
+            )
+        } catch is TimedOutError {
+            let elapsed = Int(Date().timeIntervalSince(start) * 1000)
+            // withProcessTimeout cancelled the task — Subprocess sends SIGKILL.
+            return ExecutionResult(stdout: "", stderr: "", exitCode: -1, timedOut: true, durationMs: elapsed)
+        } catch {
+            return ExecutionResult(stdout: "", stderr: error.localizedDescription, exitCode: -1, timedOut: false, durationMs: 0)
+        }
+    }
+
+    // MARK: - Timeout
+
+    private struct TimedOutError: Error {}
+
+    /// Runs `body` and cancels it (triggering SIGKILL on any live subprocess)
+    /// if it does not complete within `seconds`.
+    private static func withProcessTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        body: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask { try await body() }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw TimedOutError()
+            }
+            defer { group.cancelAll() }
+            // Returns the result of whichever task finishes first.
+            // If the timeout fires first, TimedOutError propagates.
+            return try await group.next()!
         }
     }
 
     // MARK: - Path canonicalization
 
     /// Returns the real (symlink-resolved) absolute path via POSIX realpath(3).
-    /// Falls back to the original path if realpath fails (e.g. path does not exist).
+    /// On macOS /var → /private/var, so Seatbelt profile subpath rules must
+    /// use the canonical form to match what the kernel sees.
     private static func canonicalPath(_ path: String) -> String {
         var buf = [CChar](repeating: 0, count: Int(PATH_MAX))
         guard realpath(path, &buf) != nil else { return path }
-        return buf.withUnsafeBytes { String(validating: $0.prefix(while: { $0 != 0 }), as: UTF8.self) } ?? path
+        return buf.withUnsafeBytes {
+            String(validating: $0.prefix(while: { $0 != 0 }), as: UTF8.self)
+        } ?? path
     }
 
     // MARK: - Network policy resolution
 
-    /// Returns IP address strings for all hosts named in `policy`.
-    /// Runs before sandboxing so normal DNS is available.
     private static func resolveNetworkPolicy(_ policy: SandboxNetworkPolicy) -> [String] {
         switch policy {
-        case .none:
-            return []
-        case .outboundToHosts(let hosts):
-            return hosts.flatMap { resolveHost($0) }
+        case .none:                   return []
+        case .outboundToHosts(let h): return h.flatMap { resolveHost($0) }
         }
     }
 
-    /// Resolves a hostname to its IPv4/IPv6 addresses using getaddrinfo.
     private static func resolveHost(_ hostname: String) -> [String] {
         var hints = addrinfo()
-        hints.ai_family = AF_UNSPEC
+        hints.ai_family   = AF_UNSPEC
         hints.ai_socktype = SOCK_STREAM
         var res: UnsafeMutablePointer<addrinfo>? = nil
         guard getaddrinfo(hostname, nil, &hints, &res) == 0, let head = res else { return [] }
@@ -150,41 +145,26 @@ enum CommandRunner {
             case AF_INET:
                 var sin = node.pointee.ai_addr.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee }
                 inet_ntop(AF_INET, &sin.sin_addr, &buf, socklen_t(INET6_ADDRSTRLEN))
-                ips.append(buf.withUnsafeBytes { String(decoding: $0.prefix(while: { $0 != 0 }), as: UTF8.self) })
+                ips.append(buf.withUnsafeBytes { String(validating: $0.prefix(while: { $0 != 0 }), as: UTF8.self) } ?? "")
             case AF_INET6:
                 var sin6 = node.pointee.ai_addr.withMemoryRebound(to: sockaddr_in6.self, capacity: 1) { $0.pointee }
                 inet_ntop(AF_INET6, &sin6.sin6_addr, &buf, socklen_t(INET6_ADDRSTRLEN))
-                ips.append(buf.withUnsafeBytes { String(decoding: $0.prefix(while: { $0 != 0 }), as: UTF8.self) })
+                ips.append(buf.withUnsafeBytes { String(validating: $0.prefix(while: { $0 != 0 }), as: UTF8.self) } ?? "")
             default:
                 break
             }
             cur = node.pointee.ai_next
         }
-        return ips
+        return ips.filter { !$0.isEmpty }
     }
 
     // MARK: - Seatbelt profile
 
     private static func seatbeltProfile(sandboxDir: String, allowedIPs: [String]) -> String {
-        // Strategy: allow everything by default, then selectively deny.
-        //
-        // A deny-default profile causes SIGABRT during libc/dyld startup because
-        // the minimal set of required Mach services and file paths is too large
-        // to enumerate portably across macOS versions. The allow-default approach
-        // achieves the security goals we actually care about:
-        //
-        //   • File writes are confined to sandboxDir — everything else is denied.
-        //   • Network is blocked (or restricted to specific resolved IPs for tests
-        //     that require connectivity).
-        //   • Reads are unrestricted, which is acceptable for an eval tool: we are
-        //     not trying to prevent data exfiltration, only filesystem mutation and
-        //     network side-effects.
-
         let networkStanza: String
         if allowedIPs.isEmpty {
             networkStanza = "(deny network*)"
         } else {
-            // Allow DNS (UDP 53) so the sandboxed process can resolve names.
             var lines: [String] = [#"(allow network-outbound (remote udp "*:53"))"#]
             for ip in allowedIPs {
                 lines.append(#"(allow network-outbound (remote ip "\#(ip)"))"#)
@@ -211,17 +191,6 @@ enum CommandRunner {
         \(networkStanza)
         """
     }
-
-    // MARK: - Timeout
-
-    private static func waitWithTimeout(process: Process, seconds: TimeInterval) -> Bool {
-        let sem = DispatchSemaphore(value: 0)
-        DispatchQueue.global(qos: .utility).async {
-            process.waitUntilExit()
-            sem.signal()
-        }
-        return sem.wait(timeout: .now() + seconds) == .success
-    }
 }
 
 // MARK: - ExecutionResult helpers
@@ -232,8 +201,8 @@ extension ExecutionResult {
     }
 
     /// True if the command started and ran without a launcher-level error or
-    /// timeout. Exit codes like 1 (diff with differences, grep with no matches)
-    /// are treated as normal — the test's `score` function interprets them.
+    /// timeout. Allows exit codes like 1 (diff with differences, grep with no
+    /// matches) — individual tests interpret those.
     var launched: Bool {
         !timedOut && exitCode != -1 && exitCode != 127
     }
