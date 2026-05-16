@@ -46,9 +46,12 @@ struct DiffFilesTest: SandboxTestCase {
 
         let out = result.stdout
         let (ok, note) = OutputValidator.check([
-            (result.exitCode == 1, "diff exited 0 — files appear identical, wrong filenames used"),
+            (result.exitCode == 1,
+             result.exitCode == 0
+                 ? "command exited 0 with no differences — wrong tool or wrong filenames"
+                 : "unexpected exit code \(result.exitCode)"),
             (out.contains(Self.changedToken),
-             "changed line token '\(Self.changedToken)' not found in diff output"),
+             "changed token '\(Self.changedToken)' not in output — command may not be diff"),
         ])
         return SandboxScore(executable: true, correct: ok, executionMs: result.durationMs, note: note)
     }
