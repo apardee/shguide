@@ -42,6 +42,16 @@ enum SandboxRegistry {
         Sha256Test(),
         Base64Test(),
 
+        // Pipe and compound command tests
+        DiskUsageSortTest(),
+        GrepContextTest(),
+        JsonExtractTest(),
+        PsGrepPipelineTest(),
+        CompoundEchoTest(),
+        ZipArchiveTest(),
+        SymlinkTest(),
+        DateFormatTest(),
+
         // Network (string-verified)
         PingCountTest(),
     ]

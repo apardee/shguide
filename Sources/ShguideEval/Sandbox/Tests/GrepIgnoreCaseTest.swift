@@ -8,8 +8,7 @@ import Foundation
 /// and one clean line. A correct command must match all three error lines and
 /// return exit code 0 (or 1 if grep finds nothing — treated as failure here).
 struct GrepIgnoreCaseTest: SandboxTestCase {
-    let rowIDs = ["grep_ignore_case_046", "grep_specific_092", "grep_context_123",
-                  "grep_invert_125"]
+    let rowIDs = ["grep_ignore_case_046", "grep_specific_092", "grep_invert_125"]
 
     // Fixture file with a mix of cased error lines and one clean line.
     static let logFileName = "app.log"
