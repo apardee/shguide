@@ -4,7 +4,7 @@ import FoundationModels
 @available(macOS 26.0, *)
 public struct ManPageTool: Tool {
     public let name = "manPage"
-    public let description = "Read the NAME and SYNOPSIS sections of a command's man page on this system. Use this when unsure of a flag's exact spelling or meaning."
+    public let description = "Read the NAME and SYNOPSIS sections of a command's man page on this system. Call this to verify exact flag syntax before suggesting any command that uses options — BSD tools on macOS frequently have different flags than their Linux equivalents. Do not rely on prior knowledge of flag syntax; verify with this tool."
 
     public let availableBinaries: Set<String>
 

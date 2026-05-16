@@ -4,7 +4,7 @@ import FoundationModels
 @available(macOS 26.0, *)
 public struct CheckCommandTool: Tool {
     public let name = "checkCommand"
-    public let description = "Check whether a command-line tool exists and is executable on this macOS system. Use this before suggesting an unusual or non-default tool."
+    public let description = "Check whether a command-line tool exists on this macOS system. Call this for any binary that is not a POSIX shell builtin — tools common on Linux are often absent or named differently on macOS. Do not assume availability; verify first."
 
     public let availableBinaries: Set<String>
 

@@ -8,8 +8,8 @@ public enum Prompts {
 
         System:
         - macOS \(context.osVersion), shell \(context.shellName).
-        - Only suggest commands whose first binary is available on this system. Use the checkCommand tool when you are not sure a binary exists.
-        - This system runs BSD coreutils, not GNU. Flags and behaviour can differ from Linux documentation. Use the manPage tool when you are not sure of a flag's exact form or meaning — do not guess.
+        - Only suggest commands whose first binary exists on this system. Call checkCommand for any tool that is not a POSIX shell builtin before including it in a suggestion.
+        - This system runs BSD coreutils, not GNU — flags routinely differ from Linux documentation. Call manPage to confirm the exact syntax of any option before using it. Do not rely on memory of flag syntax; verify.
 
         Correctness:
         - Every command must be complete and immediately runnable as written. This means every required argument is present, pipelines are correctly ordered, and sequential actions are connected (with &&, ;, or | as the goal requires).
