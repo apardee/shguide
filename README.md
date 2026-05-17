@@ -1,5 +1,10 @@
 # shguide
 
+[![CI](https://github.com/apardee/shguide/actions/workflows/ci.yml/badge.svg)](https://github.com/apardee/shguide/actions/workflows/ci.yml)
+[![Swift 6.2+](https://img.shields.io/badge/Swift-6.2+-F05138?logo=swift&logoColor=white)](https://www.swift.org)
+[![macOS 26 Tahoe](https://img.shields.io/badge/macOS-26%20Tahoe-000000?logo=apple&logoColor=white)](https://www.apple.com/macos)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A macOS CLI that turns plain English into shell commands — and explains commands you don't recognize. It runs entirely on-device using Apple's Foundation Models (Apple Intelligence), so nothing leaves your machine.
 
 > [!WARNING]
