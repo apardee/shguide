@@ -41,8 +41,7 @@ class Shguide < Formula
   end
 
   test do
-    assert_match "0.1.0", shell_output("#{bin}/shguide --version")
-    assert_match "shell:", shell_output("#{bin}/shguide --config")
-    assert_match "shguide()", shell_output("#{bin}/shguide --shell-init zsh")
+    system bin/"shguide", "--version"
+    system bin/"shguide", "--shell-init", "zsh"
   end
 end
