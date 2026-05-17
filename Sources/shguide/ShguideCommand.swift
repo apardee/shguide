@@ -189,56 +189,43 @@ extension ShguideCommand {
         }
     }
 
-    // Resolve the binary's own path so the wrapper works regardless of whether
-    // shguide is on PATH (e.g. during development with .build/debug/shguide).
-    private var resolvedBinaryPath: String {
-        let arg0 = CommandLine.arguments[0]
-        if let resolved = realpath(arg0, nil) {
-            defer { free(resolved) }
-            return String(cString: resolved)
-        }
-        if arg0.hasPrefix("/") { return arg0 }
-        return FileManager.default.currentDirectoryPath + "/" + arg0
-    }
-
     // zsh: print -z injects the command into the ZLE readline buffer.
     // The prompt shows the command ready to edit/run; history records it on execution.
+    // `command shguide` bypasses this function to reach the binary, avoiding both
+    // recursion and Homebrew Cellar path staleness across upgrades.
     private var zshInit: String {
-        let bin = resolvedBinaryPath
-        return """
-            shguide() {
-              local cmd
-              cmd=$('\(bin)' "$@") || return
-              [[ -n $cmd ]] && print -z -- "$cmd"
-            }
-            """
+        """
+        shguide() {
+          local cmd
+          cmd=$(command shguide "$@") || return
+          [[ -n $cmd ]] && print -z -- "$cmd"
+        }
+        """
     }
 
     // bash: no readline-inject API exists for regular functions (READLINE_LINE only works
     // inside bind -x callbacks). Best available: add to history for ↑ recall.
     private var bashInit: String {
-        let bin = resolvedBinaryPath
-        return """
-            shguide() {
-              local cmd
-              cmd=$('\(bin)' "$@") || return
-              [[ -n $cmd ]] || return
-              history -s -- "$cmd"
-              printf '  (added to history — press ↑ to recall)\\n' >&2
-            }
-            """
+        """
+        shguide() {
+          local cmd
+          cmd=$(command shguide "$@") || return
+          [[ -n $cmd ]] || return
+          history -s -- "$cmd"
+          printf '  (added to history — press ↑ to recall)\\n' >&2
+        }
+        """
     }
 
     // fish: commandline sets the interactive input buffer directly.
     private var fishInit: String {
-        let bin = resolvedBinaryPath
-        return """
-            function shguide
-                set cmd ('\(bin)' $argv)
-                or return
-                test -n "$cmd"; and commandline -- $cmd
-            end
-            """
+        """
+        function shguide
+            set cmd (command shguide $argv)
+            or return
+            test -n "$cmd"; and commandline -- $cmd
+        end
+        """
     }
 }
 

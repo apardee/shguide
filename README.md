@@ -2,6 +2,9 @@
 
 A macOS CLI that turns plain English into shell commands — and explains commands you don't recognize. It runs entirely on-device using Apple's Foundation Models (Apple Intelligence), so nothing leaves your machine.
 
+> [!WARNING]
+> **Early and experimental.** In sandbox testing, the model produces a correct, runnable command roughly 40% of the time. BSD/macOS flag differences, missing tools, and imprecise flag usage are the main failure modes. Always read a suggested command before running it. See [Limitations](#limitations) for details.
+
 ```
 $ shguide find large files in this subdirectory sorted by size
 ⠹ Working…
@@ -32,13 +35,31 @@ Counts the number of lines containing "ERROR" in all nginx log files.
 
 - macOS 26 Tahoe on Apple silicon
 - Apple Intelligence enabled (System Settings → Apple Intelligence & Siri)
-- Swift 6.2+ / Xcode 26
 
-## Build
+## Setup
+
+### Homebrew (recommended)
+
+```sh
+brew tap apardee/shguide https://github.com/apardee/shguide
+brew install --HEAD shguide
+```
+
+Then add shell integration to your config (Homebrew will show this as a post-install note):
+
+```zsh
+# ~/.zshrc
+eval "$(shguide --shell-init zsh)"
+```
+
+### Build from source
+
+Requires Swift 6.2+ / Xcode 26.
 
 ```sh
 swift build -c release
-.build/release/shguide --help
+cp .build/release/shguide /usr/local/bin/shguide
+eval "$(shguide --shell-init zsh)"   # add to ~/.zshrc
 ```
 
 ## Shell integration
@@ -66,9 +87,7 @@ eval "$(shguide --shell-init bash)"
 shguide --shell-init fish | source
 ```
 
-This defines a `shguide` shell function that wraps the binary. The function shadows the binary name, so your existing muscle memory works unchanged. The binary is always called by its resolved absolute path, so the wrapper works even if `shguide` isn't on your PATH (e.g., during development with `.build/debug/shguide`).
-
-To test without editing your config, paste the eval line directly into your terminal session.
+This defines a `shguide` shell function that shadows the binary name — your existing muscle memory works unchanged. The function uses `command shguide` internally to call the binary, so there is no recursion.
 
 **Without shell integration**, the selected command is still copied to your clipboard.
 
@@ -86,7 +105,7 @@ shguide --shell-init <shell>       # Print shell integration (zsh, bash, fish)
 
 In the carousel, use ← → (or h/l) to cycle through suggestions and Enter to select. Press q or Escape to quit without selecting.
 
-## Limitations (read this)
+## Limitations
 
 **The model gets things wrong a meaningful fraction of the time**, and understanding why helps you use it safely.
 

@@ -76,7 +76,7 @@ The key mechanism: the wrapper calls the binary via `$(...)` command substitutio
 - **bash**: `history -s -- "$cmd"` — no readline-inject API exists for regular bash functions; ↑ recall is the best available.
 - **fish**: `commandline -- "$cmd"` — sets the interactive input buffer directly.
 
-The binary path is resolved with `realpath` at `--shell-init` time and hardcoded into the function body, so the wrapper works regardless of whether `shguide` is on PATH. The function shadows the binary name; callers can bypass with `command shguide ...` or `\shguide ...`.
+The wrapper uses `command shguide` (not a hardcoded path) to call the binary. This avoids two problems: recursion (the function is also named `shguide`, and `command` bypasses function lookup), and Homebrew Cellar path staleness (a baked-in Cellar path like `/opt/homebrew/Cellar/shguide/HEAD/bin/shguide` would break on every `brew upgrade`). The binary must be on PATH for the wrapper to work — Homebrew handles this automatically; for development use `export PATH="$PWD/.build/debug:$PATH"` first. Callers can always bypass the function with `command shguide ...` or `\shguide ...`.
 
 Clipboard copy still runs after selection as a fallback for sessions without the wrapper.
 
