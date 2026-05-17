@@ -21,12 +21,6 @@ class Shguide < Formula
     bin.install ".build/release/shguide-eval"
     pkgshare.install "Datasets"
     doc.install Dir["docs/*"]
-
-    # Install shell integration files so `source`-based setup works too.
-    (share/"shguide").mkpath
-    (share/"shguide/shguide.zsh").write shell_output("#{bin}/shguide --shell-init zsh")
-    (share/"shguide/shguide.bash").write shell_output("#{bin}/shguide --shell-init bash")
-    (share/"shguide/shguide.fish").write shell_output("#{bin}/shguide --shell-init fish")
   end
 
   def caveats
@@ -41,9 +35,6 @@ class Shguide < Formula
 
         fish — add to ~/.config/fish/config.fish:
           shguide --shell-init fish | source
-
-      Or source the pre-generated files installed at:
-        #{opt_share}/shguide/shguide.{zsh,bash,fish}
 
       Without shell integration, the selected command is copied to your clipboard.
     EOS

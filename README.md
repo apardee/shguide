@@ -45,10 +45,9 @@ brew tap apardee/shguide https://github.com/apardee/shguide
 brew install --HEAD shguide
 ```
 
-Then add shell integration to your config (Homebrew will show this as a post-install note):
+Homebrew will print shell integration instructions after install. The short version — add to `~/.zshrc`:
 
 ```zsh
-# ~/.zshrc
 eval "$(shguide --shell-init zsh)"
 ```
 
