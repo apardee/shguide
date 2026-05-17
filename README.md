@@ -4,23 +4,28 @@ A macOS CLI that turns plain English into shell commands — and explains comman
 
 ```
 $ shguide find large files in this subdirectory sorted by size
-1. find . -type f -size +500M -ls | sort -k7 -rn
-   Find files larger than 500 MB and list them sorted biggest first.
-2. du -sh * | sort -rh | head -20
-   Show disk usage of all items in the current directory, largest first.
+⠹ Working…
 
-Select [1-2, q]: 1
-✓ copied: find . -type f -size +500M -ls | sort -k7 -rn
+  ❯  find . -type f -size +500M -ls | sort -k7 -rn
+     Find files larger than 500 MB and list them sorted biggest first.
+
+  ◆ ◇   ← → cycle  ·  ↵ select  ·  q quit
+```
+
+After pressing Enter, the selected command lands on your shell prompt ready to edit or run:
+
+```
+$ find . -type f -size +500M -ls | sort -k7 -rn█
 ```
 
 ```
 $ shguide --describe 'grep -r "ERROR" /var/log/nginx | wc -l'
 Counts the number of lines containing "ERROR" in all nginx log files.
 
-1. grep -r "ERROR" /var/log/nginx
-   Recursively searches all files under /var/log/nginx for the string "ERROR".
-2. | wc -l
-   Pipes the results to wc -l to count the matching lines.
+1.  grep -r "ERROR" /var/log/nginx
+    Recursively searches all files under /var/log/nginx for the string "ERROR".
+2.  | wc -l
+    Pipes the results to wc -l to count the matching lines.
 ```
 
 ## Requirements
@@ -36,18 +41,50 @@ swift build -c release
 .build/release/shguide --help
 ```
 
+## Shell integration
+
+For the best experience — selected commands land on your shell prompt rather than just the clipboard — add the one-liner for your shell to its config file.
+
+**zsh** (recommended — selected commands appear on the prompt via `print -z`):
+
+```zsh
+# ~/.zshrc
+eval "$(shguide --shell-init zsh)"
+```
+
+**bash** (selected commands are added to history; press ↑ to recall):
+
+```bash
+# ~/.bashrc
+eval "$(shguide --shell-init bash)"
+```
+
+**fish** (selected commands appear on the prompt via `commandline`):
+
+```fish
+# ~/.config/fish/config.fish
+shguide --shell-init fish | source
+```
+
+This defines a `shguide` shell function that wraps the binary. The function shadows the binary name, so your existing muscle memory works unchanged. The binary is always called by its resolved absolute path, so the wrapper works even if `shguide` isn't on your PATH (e.g., during development with `.build/debug/shguide`).
+
+To test without editing your config, paste the eval line directly into your terminal session.
+
+**Without shell integration**, the selected command is still copied to your clipboard.
+
 ## Usage
 
 ```sh
-shguide <goal>                     # Suggest 1–4 commands for a goal
+shguide <goal>                     # Suggest commands for a goal
 shguide --describe '<command>'     # Explain what a command does (quote pipelines)
 shguide --history <goal>           # Also surface matches from your shell history
 shguide --include-destructive ...  # Show rm/dd/etc. too, flagged in red
 shguide --json <goal>              # Machine-readable JSON output
 shguide --config                   # Print env info and model availability
+shguide --shell-init <shell>       # Print shell integration (zsh, bash, fish)
 ```
 
-Select a suggestion with the number keys. It's copied to your clipboard — paste it into your terminal when you're ready to run it.
+In the carousel, use ← → (or h/l) to cycle through suggestions and Enter to select. Press q or Escape to quit without selecting.
 
 ## Limitations (read this)
 
@@ -67,7 +104,7 @@ In sandbox evaluations against ~60 real tasks, the model produces a correct, run
 
 ### What this means in practice
 
-- **Always read the command before running it.** shguide copies to clipboard so you can inspect before executing. Never paste something you don't understand into a terminal with elevated privileges.
+- **Always read the command before running it.** The selected command lands on your prompt so you can review it before pressing Enter. Never run something you don't understand, especially with elevated privileges.
 - **It's better at common patterns than edge cases.** `find . -name "*.log"`, `grep -r "TODO" .`, `chmod +x script.sh` — high confidence. Complex pipelines, flag-heavy operations, or anything macOS-specific — treat suggestions as a starting point, not ground truth.
 - **Destructive commands are hidden by default.** `rm`, `dd`, `mkfs`, and similar are filtered out unless you pass `--include-destructive`. When shown, they're flagged in red. See [docs/SAFETY.md](docs/SAFETY.md) for the full policy.
 - **Describe mode is more reliable than suggest mode.** Explaining a known command (`--describe`) is an easier task for the model than generating one from scratch. If you have a command you don't recognize, describe mode is a good bet.
@@ -89,4 +126,3 @@ The evaluation dataset includes examples derived from the [NL2Bash corpus](https
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
